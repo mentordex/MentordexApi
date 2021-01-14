@@ -9,7 +9,7 @@ module.exports = function () {
     const db_user = config.get('database.user');
     const db_pass = config.get('database.pass');
     
-    conn_str = "mongodb+srv://sandeep:Test@123@cluster0.wvnoi.mongodb.net/mentordex?retryWrites=true&w=majority"
+    conn_str = ""
 
   
     mongoose.connect(conn_str, { useFindAndModify: false, useNewUrlParser: true, useUnifiedTopology: true })
