@@ -1,12 +1,31 @@
 const _ = require('lodash'); 
 const config = require('config');
-const sgMail = require('@sendgrid/mail');
 const { User } = require('../schema/user');
 const { Dashboard } = require('../schema/dashboard');
 const { Contact } = require('../schema/contact');
+const { Office } = require('../schema/office');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
-sgMail.setApiKey(config.get('sendgrid.key'));
+const nodemailer = require("nodemailer");
+
+exports.emailExist = async (req, res) => {
+
+    
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { email } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne(
+        {email:email},
+        { _id: 1 }
+    );
+    console.log('existingUser',existingUser)
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));    
+   
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+
+}
+
 /*
 * Here we would probably call the DB to confirm the user exists
 * Then validate if they're authorized to login
@@ -73,17 +92,16 @@ exports.forgotPassword = async (req, res) => {
     const link = `${config.get('webEndPoint')}/authorization/reset-password/${resetPasswordToken}`
 
     const msg = {
-        to: existingUser.email,
-        from: config.get('sendgrid.from'),
+        to: existingUser.email,        
         subject: req.polyglot.t('FORGOT-PASSWORD'),
        // text: req.polyglot.t('YOU-ARE-IN'),
-        html: `Hi ${existingUser.name},<br>Here’s your forgot password <a href="${link}">link</a>.<br> 
+        html: `Hi ,<br>Here’s your forgot password <a href="${link}">link</a>.<br> 
         <br>
         Let me know if you need anything.<br> 
         <br>
         Thanks.`,
     };
-    sgMail.send(msg);
+    sendEmail(msg.to, msg.subject, msg.html);
     
     // Since all the validations passed, we send the emailSent message
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser); 
@@ -209,9 +227,7 @@ exports.updatePassword = async (req, res) => {
    
     const encryptedPassword = await userObject.encryptPassword(existingUser, password);//encrypted password
 
-    if(encryptedPassword == existingUser.password){
-        return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USE-ANOTHER-PASSWORD'));
-    }
+    
     
     await User.findOneAndUpdate({ email: existingUser.email }, { $set: { password: encryptedPassword, modified_at:new Date(), reset_password_token:'' } }, { new: true })
 
@@ -370,6 +386,17 @@ exports.contactToAdmin = async (req, res) => {
 
 }
 
+exports.officeListing = async (req, res) => {
+
+    
+    Office.find({}, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+    });
+   
+}
+
 exports.memberListing = async (req, res) => {
 
   
@@ -447,5 +474,26 @@ exports.memberListing = async (req, res) => {
    
 
    
+}
+
+
+async function sendEmail(to,subject,message){
+    const transporter =  await nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // true for 465, false for other ports
+        auth: {
+          user: '', // generated ethereal user
+          pass: '', // generated ethereal password
+        },
+    });
+   
+    await transporter.sendMail({
+        from: 'dexmentor@gmail.com', // sender address
+        to: to, // list of receivers
+        subject: subject, // Subject line
+        //text: "rererere world?", // plain text body
+        html: message, // html body
+    });
 }
 

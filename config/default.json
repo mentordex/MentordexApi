@@ -3,6 +3,7 @@
     "debug": "true",
     "port": "3000",    
     "webAdminEmail":"",
+    "webEndPoint":"http://18.218.99.213/mentordex/front/",
     "database": {      
         "name": "mentordex",
         "user": "",
