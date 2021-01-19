@@ -1,10 +1,13 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing } = require('../controller/auth.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
 module.exports = router => {
+
+    // POST route to mock a login  endpoint
+    router.post("/api/checkEmail", [validator('emailExist')], procErr, emailExist)
 
     // POST route to mock a login  endpoint
     router.post("/api/login", [validator('login')], procErr, login)
@@ -33,5 +36,5 @@ module.exports = router => {
 
     router.post("/api/contactToAdmin",  procErr, contactToAdmin)
     
-    
+    router.get("/api/offices",  procErr, officeListing)
 }

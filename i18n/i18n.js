@@ -23,7 +23,7 @@ exports.messages = {
         "TYPE-ALREADY-EXIST":"Type already exist in our system.",
         "NO-PROPERTY-FOUND":"Sorry!! could not find the property.",
         "USER-NOT-ACTIVE":"Sorry!! You are not a active user. Please contact to admin.",
-        'emailRequiredField': "'email' is a required field.",
+        'emailRequiredField': "'email/Phone Number' is a required field.",
         'emailIsEmail': "This is not a valid email address.",
         'passwordRequiredField': "'password' is a required field.",
         
@@ -37,7 +37,7 @@ exports.messages = {
     },
     es: {
         // Mensajes de error
-        'emailRequiredField': "'email' es un campo requerido.",
+        'emailRequiredField': "'email/Phone Number' es un campo requerido.",
         'emailIsEmail': "Este no es un email válido.",
         'passwordRequiredField': "'password' es un campo requerido.",
         

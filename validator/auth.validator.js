@@ -9,6 +9,14 @@ exports.validator = functionName => {
 
     switch (functionName) {
 
+        
+        case 'emailExist': {
+            return [
+                check('email')
+                    .exists().withMessage('emailRequiredField')                   
+            ]
+        }
+        
         case 'login': {
             return [
                 check('email')

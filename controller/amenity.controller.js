@@ -61,8 +61,9 @@ exports.add = async (req, res) => {
 
 exports.listing = async (req, res) => {
 
-    
-    Amenity.find({}, function(err, result) {
+    const {category} = req.body
+   
+    Amenity.find({'category':category}, function(err, result) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
