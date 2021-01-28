@@ -1,11 +1,12 @@
 const { validator } = require('../validator/cityNeighbourhood.validator')
 const { procErr } = require('../utilities/processErrors')
-const { addCity, addNeighbourhood, cityListing, neighbourhoodListing, allNeighbourhoods, deleteCity, deleteNeighborhood } = require('../controller/cityNeighbourhood.controller')
+const { addCity, addNeighbourhood, cityListing, neighbourhoodListing, allNeighbourhoods, deleteCity, deleteNeighborhood, uploadImage } = require('../controller/cityNeighbourhood.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
 module.exports = router => {
 
+    router.post("/api/city/uploadImage", procErr, uploadImage)
     // POST route to mock a city add  endpoint
     router.post("/api/city/add", [validator('addCity')], procErr, addCity)
 

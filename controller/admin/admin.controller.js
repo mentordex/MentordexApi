@@ -5,6 +5,9 @@ const { Admin } = require('../../schema/admin/admin');
 const { User } = require('../../schema/user');
 const { City } = require('../../schema/city');
 const { Neighbourhood } = require('../../schema/neighbourhood');
+const { Category } = require('../../schema/category');
+const { Subcategory } = require('../../schema/subcategory');
+const { Faqcategory } = require('../../schema/faqcategory');
 const { PropertyType } = require('../../schema/propertyType');
 const { Property } = require('../../schema/property');
 const { Amenity } = require('../../schema/amenity');
@@ -13,7 +16,8 @@ const { Pageview } = require('../../schema/pageview');
 const responseCode = require('../../utilities/responseCode');
 var mongoose = require('mongoose');
 const adminObject = new Admin();
-sgMail.setApiKey(config.get('sendgrid.key'));
+//sgMail.setApiKey(config.get('sendgrid.key'));
+const nodemailer = require("nodemailer");
 /*
 * Here we would probably call the DB to confirm the user exists
 * Then validate if they're authorized to login
@@ -209,7 +213,8 @@ exports.cityListing = async (req, res) => {
             $project: {
                 title: 1,    
                 count: 1,    
-                image:1,      
+                image:1,  
+                is_visible_on_home:1,      
                 created_at:1,        
                 "neighbourhood.title": 1               
 
@@ -272,7 +277,9 @@ exports.neighbourhoodListing = async (req, res) => {
         },                
         {
             $project: {   
-                'title':1,     
+                'title':1, 
+                'image':1,  
+                'city_id':1,     
                 'created_at':1,              
                 'city.title':1,           
                                                         
@@ -305,6 +312,174 @@ exports.neighbourhoodListing = async (req, res) => {
     }
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(data);*/
+
+            
+       
+}
+
+
+exports.categoryListing = async (req, res) => {
+
+    const {  size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] =  -1     
+    
+    if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
+        condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
+    }
+    
+
+    let totalRecords = await Category.count(condition);   
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages',totalPages);
+    let start = pageNumber * size;
+  
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+    let records = await Category.aggregate([   
+        {
+            $match:condition
+        },
+
+        {
+            $lookup: {
+                from: "subcategories",
+                localField: "_id",
+                foreignField: "category_id",
+                as: "subcategory"
+            }
+        },       
+        {
+            $project: {
+                title: 1,    
+                count: 1,    
+                image:1,  
+                is_visible_on_home:1,      
+                created_at:1,        
+                "subcategory.title": 1               
+
+            }
+        },
+        { 
+            $skip: skip
+        },
+        { 
+            $limit: limit
+        },
+        { 
+            $sort: sortBy
+        }      
+    ]) 
+    let data = {
+        records:records,
+        total_records:totalRecords
+    }
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);    
+}
+
+exports.subcategoryListing = async (req, res) => {
+   
+    const {  size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] =  -1     
+    
+    if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
+        condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
+    }
+    if (_.has(req.body, ['category_id'])   &&  (req.body['category_id']).length>0){ 
+        condition['category_id'] =  mongoose.Types.ObjectId(req.body['category_id'])  
+    }
+    
+   
+    let totalRecords = await Subcategory.count(condition);   
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages',totalPages);
+    let start = pageNumber * size;
+  
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);  
+    
+  
+    Subcategory.aggregate([
+        {
+            $match: condition
+        },
+        { 
+            
+            "$lookup": {
+                from: "categories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category"
+            }
+        },                
+        {
+            $project: {   
+                'title':1, 
+                'image':1,  
+                'category_id':1,     
+                'created_at':1,              
+                'category.title':1,           
+                                                        
+            },
+        }, 
+        {
+         
+            $skip: skip
+        },
+        { 
+            $limit: limit
+        },
+        { 
+            $sort: sortBy
+        } 
+
+      ], function(err, records){    
+          
+          let data = {
+            records:records,
+            total_records:totalRecords
+          }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+      })          
+       
+}
+
+
+exports.faqcategoryListing = async (req, res) => {
+   
+    const {  size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] =  -1     
+    
+    if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
+        condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
+    }
+   
+
+    let totalRecords = await Faqcategory.count(condition);   
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages',totalPages);
+    let start = pageNumber * size;
+  
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);  
+    
+  
+    let records = await Faqcategory.find(condition).skip(skip).limit(limit).sort(sortBy);
+    let data = {
+        records:records,
+        total_records:totalRecords
+    }
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 
             
        
@@ -469,8 +644,13 @@ exports.amenityListing = async (req, res) => {
     
     
     if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
-        condition['type'] =  { $regex: req.body['search'], $options: 'i' }   
+        condition['type'] =  { $regex: req.body['search'], $options: 'i' }  
+        //condition['description'] =  { $regex: req.body['search'], $options: 'i' }   
     }
+    if (_.has(req.body, ['category_id'])   &&  (req.body['category_id']).length>0){ 
+        condition['category_id'] =  mongoose.Types.ObjectId(req.body['category_id'])  
+    }
+    
 
     let totalRecords = await Amenity.count(condition);   
     //calculating the limit and skip attributes to paginate records
@@ -482,13 +662,51 @@ exports.amenityListing = async (req, res) => {
     let limit = parseInt(size);  
     
   
-    let records = await Amenity.find(condition).skip(skip).limit(limit).sort(sortBy);
-    let data = {
-        records:records,
-        total_records:totalRecords
-    }
+    Amenity.aggregate([
+        {
+            $match: condition
+        },
+        { 
+            
+            "$lookup": {
+                from: "faqcategories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category"
+            }
+        },                
+        {
+            $project: {   
+                'type':1,  
+                'description':1, 
+                'category_id':1,            
+                'is_active':1,     
+                'created_at':1,              
+                'category.title':1,           
+                                                        
+            },
+        }, 
+        {
+         
+            $skip: skip
+        },
+        { 
+            $limit: limit
+        },
+        { 
+            $sort: sortBy
+        } 
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+      ], function(err, records){    
+          
+          let data = {
+            records:records,
+            total_records:totalRecords
+          }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+      })
+
+   
 
             
        
@@ -721,7 +939,7 @@ exports.addUpdateAdmin = async (req, res) => {
         if (!existingType) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
 
         //save Admin 
-        Admin.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: req.body }, { new: true }, function (err, type) {
+        Admin.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: {email:req.body.email,name:req.body.name}}, { new: true }, function (err, type) {
             
             if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));        
                 
@@ -745,10 +963,8 @@ exports.addUpdateAdmin = async (req, res) => {
             if (err) return res.status(500).send(err);        
                 
             const msg = {
-                to: req.body.email,
-                from: config.get('sendgrid.from'),
-                subject: req.polyglot.t('REGISTER-SUCCESSFULL'),
-                text: req.polyglot.t('YOU-ARE-IN'),
+                to: req.body.email,               
+                subject: req.polyglot.t('REGISTER-SUCCESSFULL'),           
                 html: `Hi ${req.body.name},<br>You have been added as a admin. So please login with below login details:!<br> 
                
                 Email:${req.body.email}
@@ -759,7 +975,7 @@ exports.addUpdateAdmin = async (req, res) => {
                 <br>
                 Thanks.`,
             };
-            sgMail.send(msg);
+            sendEmail(msg.to, msg.subject, msg.html);
 
             return res.status(responseCode.CODES.SUCCESS.OK).send(type);        
             
@@ -868,3 +1084,22 @@ exports.updateProfile = async (req, res) => {
 }*/
 
 
+async function sendEmail(to,subject,message){
+    const transporter =  await nodemailer.createTransport({
+        host: config.get('nodemailer.host'),
+        port: config.get('nodemailer.port'),
+        secure: config.get('nodemailer.secure'), // true for 465, false for other ports
+        auth: {
+          user: config.get('nodemailer.auth.user'), // generated ethereal user
+          pass: config.get('nodemailer.auth.pass'), // generated ethereal password
+        },
+    });
+   
+    await transporter.sendMail({
+        from: config.get('fromEmail'), // sender address
+        to: to, // list of receivers
+        subject: subject, // Subject line
+        //text: "rererere world?", // plain text body
+        html: message, // html body
+    });
+}

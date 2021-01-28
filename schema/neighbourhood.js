@@ -9,6 +9,7 @@ var neighbourhoodSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'City',
     },
+    image: { type: String, trim:true },
     count: {  
         type: Number, 
         default:0

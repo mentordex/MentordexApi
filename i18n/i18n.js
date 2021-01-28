@@ -15,6 +15,7 @@ exports.messages = {
         "CITY-ID-REQUIRED": "'city' is required.",
         "CITY-ID-SHOULD-NOT-EMPTY": "'city' can not be empty.",
         "CITY-ALREADY-EXIST": "Entered city is already exist.",
+        "CATEGORY-ALREADY-EXIST": "Entered category is already exist.",
         "PROPERTY-ADDED":"Your property information has been added successfully.",
         "NO-RECORD-FOUND":"No Record Found",
         "CONTACT-REQUEST":"New Contact Request",
@@ -33,7 +34,13 @@ exports.messages = {
 
         "REGISTER-SUCCESSFULL":"Welcome email",
         "YOU-ARE-IN":"You’re in!",
-        "FORGOT-PASSWORD":"Forgot Password"
+        "FORGOT-PASSWORD":"Forgot Password",
+
+
+        //Required
+        "CATEGORY-ID-REQUIRED": "'Category' is required.",
+        "CATEGORY-ID-SHOULD-NOT-EMPTY": "'Category' can not be empty.",
+        "IMAGE-REQUIRED":"Image is required and cvan not be empty"
     },
     es: {
         // Mensajes de error

@@ -53,8 +53,8 @@ var userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum : ['AGENT', 'AGENCY'],
-        default: 'AGENT'       
+        enum : ['PARENT', 'MENTOR'],
+        default: 'PARENT'       
     },
     account_type:{
         type: String,
