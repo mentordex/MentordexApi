@@ -19,11 +19,12 @@ aws.config.update({
 const s3 = new aws.S3();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+  cb(null, true);
+  /*if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type, only JPG, JPEG , PNG and PDF is allowed!'), false);
-  }
+  }*/
 }
 
 const upload = multer({

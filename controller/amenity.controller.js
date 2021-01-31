@@ -1,6 +1,7 @@
 const _ = require('lodash'); 
 const { Amenity } = require('../schema/amenity');
 const { Property } = require('../schema/property');
+const { Faqcategory } = require('../schema/faqcategory');
 const responseCode = require('../utilities/responseCode');
 var mongoose = require('mongoose');
 
@@ -43,7 +44,7 @@ exports.add = async (req, res) => {
         if (existingType) return res.status(400).send(req.polyglot.t('TYPE-ALREADY-EXIST'));     
 
         //save city 
-        newType = new Amenity(_.pick(req.body, ['type','description','category','created_at','modified_at']));
+        newType = new Amenity(_.pick(req.body, ['type','description','category_id','is_active','created_at','modified_at']));
         
         newType.save(async function (err, type) {
             
@@ -63,11 +64,30 @@ exports.listing = async (req, res) => {
 
     const {category} = req.body
    
-    Amenity.find({'category':category}, function(err, result) {
+    Amenity.find({'category_id':mongoose.Types.ObjectId(category), 'is_active':'Yes'}, function(err, result) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
     });
+   
+}
+exports.categories = async (req, res) => {  
+   
+    Faqcategory.find({'is_active':'Yes'}, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+    });
+   
+}
+
+exports.top5listing = async (req, res) => {
+    
+    Amenity.find({'is_active':'Yes'}, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+    }).sort({created_at: -1}).limit(5);  
    
 }
 

@@ -45,11 +45,14 @@ app.get('/',function(req,res){
 // =============================================================
 require("./routes/auth.routes")(app)
 require("./routes/cityNeighbourhood.routes")(app)
+require("./routes/categorySubcategory.routes")(app)
 require("./routes/property.routes")(app)
 require("./routes/propertyType.routes")(app)
 require("./routes/amenity.routes")(app)
 require("./routes/admin/admin.routes")(app)
 require("./routes/office.routes")(app)
+require("./routes/team.routes")(app)
+require("./routes/faqcategory.routes")(app)
 //Interceptors
 app.use(error);//Error Handler
 

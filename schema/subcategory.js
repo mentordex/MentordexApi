@@ -1,19 +1,19 @@
 'use strict';
 var mongoose = require('mongoose');
 var config = require('config');
+var Schema = mongoose.Schema
 
-
-var citySchema = new mongoose.Schema({
+var subcategorySchema = new mongoose.Schema({
     title: { type: String, trim:true },
+    category_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
     image: { type: String, trim:true },
     count: {  
         type: Number, 
         default:0
-    },  
-    is_visible_on_home:{
-        type: Boolean, 
-        default:false
-    },
+    },    
     created_at: {
         type: Date,
         default: new Date()
@@ -25,6 +25,4 @@ var citySchema = new mongoose.Schema({
 
 });
 
-
-
-module.exports.City =  mongoose.model('City', citySchema);
+module.exports.Subcategory =  mongoose.model('Subcategory', subcategorySchema);

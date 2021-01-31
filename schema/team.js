@@ -1,25 +1,28 @@
+
+
 'use strict';
 var mongoose = require('mongoose');
 var config = require('config');
 var Schema = mongoose.Schema
 
-var faqSchema = new mongoose.Schema({     
-    type:{
+var teamSchema = new mongoose.Schema({     
+    name:{
         type: String, 
         trim:true
     }, 
+    title:{
+        type: String, 
+        trim:true
+    },
     description:{
         type: String, 
         trim:true
-    },
-    category_id: { 
-        type: Schema.Types.ObjectId,
-        ref: 'Faqcategory',
-    },
-    is_active:{
+    },    
+    image:{
         type: String, 
-        default:'No'
-    }, 
+        trim:true
+    },
+    
     created_at: {
         type: Date,
         default: new Date()      
@@ -32,4 +35,4 @@ var faqSchema = new mongoose.Schema({
 
 });
 
-module.exports.Amenity =  mongoose.model('Faq', faqSchema);
+module.exports.Team =  mongoose.model('Team', teamSchema);

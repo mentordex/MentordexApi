@@ -4,6 +4,7 @@ const { User } = require('../schema/user');
 const { Dashboard } = require('../schema/dashboard');
 const { Contact } = require('../schema/contact');
 const { Office } = require('../schema/office');
+const { Team } = require('../schema/team');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
@@ -155,7 +156,7 @@ exports.signup = async (req, res) => {
             <br>
             Thanks.`,
         };
-        sgMail.send(msg);
+        //sgMail.send(msg);
 
         res.setHeader('x-mentordex-auth-token', token);
         res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')   
@@ -397,6 +398,19 @@ exports.officeListing = async (req, res) => {
    
 }
 
+
+exports.teamListing = async (req, res) => {
+
+    
+    Team.find({}, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+    });
+   
+}
+
+
 exports.memberListing = async (req, res) => {
 
   
@@ -477,19 +491,20 @@ exports.memberListing = async (req, res) => {
 }
 
 
+
 async function sendEmail(to,subject,message){
     const transporter =  await nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true, // true for 465, false for other ports
+        host: config.get('nodemailer.host'),
+        port: config.get('nodemailer.port'),
+        secure: config.get('nodemailer.secure'), // true for 465, false for other ports
         auth: {
-          user: '', // generated ethereal user
-          pass: '', // generated ethereal password
+          user: config.get('nodemailer.auth.user'), // generated ethereal user
+          pass: config.get('nodemailer.auth.pass'), // generated ethereal password
         },
     });
    
     await transporter.sendMail({
-        from: 'dexmentor@gmail.com', // sender address
+        from: config.get('fromEmail'), // sender address
         to: to, // list of receivers
         subject: subject, // Subject line
         //text: "rererere world?", // plain text body

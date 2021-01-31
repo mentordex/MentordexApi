@@ -1,5 +1,5 @@
 const { procErr } = require('../utilities/processErrors')
-const { add, listing, deleteAmenity } = require('../controller/amenity.controller')
+const { add, listing, deleteAmenity, top5listing, categories } = require('../controller/amenity.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -9,6 +9,10 @@ module.exports = router => {
     router.post("/api/amenity/add", procErr, add)
 
     router.post("/api/faqs/listing", procErr, listing)
+    router.get("/api/faqs/top5listing", procErr, top5listing)
+    router.get("/api/faqs/categories", procErr, categories)
+    
     router.get("/api/amenity/listing", procErr, listing)
     router.post("/api/amenity/deleteAmenity", procErr, deleteAmenity)
+
 }
