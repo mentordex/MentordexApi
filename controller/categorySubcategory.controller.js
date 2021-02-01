@@ -14,9 +14,9 @@ exports.uploadImage = async (req, res) => {
             console.log('err',err)    
             return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err); 
         }		
-        console.log('file',req.file)
+        console.log('file',req.file.location)
 		return res.status(responseCode.CODES.SUCCESS.OK).send({
-			send:true
+			file:req.file.location
 		});
 	});
 }

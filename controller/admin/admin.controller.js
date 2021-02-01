@@ -3,8 +3,9 @@ const config = require('config');
 const sgMail = require('@sendgrid/mail');
 const { Admin } = require('../../schema/admin/admin');
 const { User } = require('../../schema/user');
+const { Country } = require('../../schema/country');
+const { State } = require('../../schema/state');
 const { City } = require('../../schema/city');
-const { Neighbourhood } = require('../../schema/neighbourhood');
 const { Category } = require('../../schema/category');
 const { Subcategory } = require('../../schema/subcategory');
 const { Faqcategory } = require('../../schema/faqcategory');
@@ -18,6 +19,7 @@ var mongoose = require('mongoose');
 const adminObject = new Admin();
 //sgMail.setApiKey(config.get('sendgrid.key'));
 const nodemailer = require("nodemailer");
+
 /*
 * Here we would probably call the DB to confirm the user exists
 * Then validate if they're authorized to login
@@ -175,8 +177,7 @@ exports.userListing = async (req, res) => {
    
 }
 
-exports.cityListing = async (req, res) => {
-
+exports.countryListing = async (req, res) => {
     const {  size, pageNumber } = req.body
     let condition = {};
     let sortBy = {};
@@ -187,7 +188,7 @@ exports.cityListing = async (req, res) => {
     }
     
 
-    let totalRecords = await City.count(condition);   
+    let totalRecords = await Country.count(condition);   
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
     console.log('totalPages',totalPages);
@@ -195,49 +196,16 @@ exports.cityListing = async (req, res) => {
   
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
     let limit = parseInt(size);
-
-    let records = await City.aggregate([   
-        {
-            $match:condition
-        },
-
-        {
-            $lookup: {
-                from: "neighbourhoods",
-                localField: "_id",
-                foreignField: "city_id",
-                as: "neighbourhood"
-            }
-        },       
-        {
-            $project: {
-                title: 1,    
-                count: 1,    
-                image:1,  
-                is_visible_on_home:1,      
-                created_at:1,        
-                "neighbourhood.title": 1               
-
-            }
-        },
-        { 
-            $skip: skip
-        },
-        { 
-            $limit: limit
-        },
-        { 
-            $sort: sortBy
-        }      
-    ]) 
+    let records = await Country.find(condition).skip(skip).limit(limit).sort(sortBy);
     let data = {
         records:records,
         total_records:totalRecords
     }
-    return res.status(responseCode.CODES.SUCCESS.OK).send(data);    
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 }
 
-exports.neighbourhoodListing = async (req, res) => {
+exports.stateListing = async (req, res) => {
    
     const {  size, pageNumber } = req.body
     let condition = {};
@@ -247,12 +215,12 @@ exports.neighbourhoodListing = async (req, res) => {
     if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
         condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
     }
-    if (_.has(req.body, ['city_id'])   &&  (req.body['city_id']).length>0){ 
-        condition['city_id'] =  mongoose.Types.ObjectId(req.body['city_id'])  
+    if (_.has(req.body, ['country_id'])   &&  (req.body['country_id']).length>0){ 
+        condition['country_id'] =  mongoose.Types.ObjectId(req.body['country_id'])  
     }
     
    
-    let totalRecords = await Neighbourhood.count(condition);   
+    let totalRecords = await State.count(condition);   
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
     console.log('totalPages',totalPages);
@@ -262,26 +230,26 @@ exports.neighbourhoodListing = async (req, res) => {
     let limit = parseInt(size);  
     
   
-    Neighbourhood.aggregate([
+    State.aggregate([
         {
             $match: condition
         },
         { 
             
             "$lookup": {
-                from: "cities",
-                localField: "city_id",
+                from: "countries",
+                localField: "country_id",
                 foreignField: "_id",
-                as: "city"
+                as: "country"
             }
         },                
         {
             $project: {   
                 'title':1, 
-                'image':1,  
-                'city_id':1,     
+                'is_active':1, 
+                'country_id':1,     
                 'created_at':1,              
-                'city.title':1,           
+                'country.title':1,           
                                                         
             },
         }, 
@@ -304,19 +272,92 @@ exports.neighbourhoodListing = async (req, res) => {
           }
         return res.status(responseCode.CODES.SUCCESS.OK).send(data);
       })
-
-    /*let records = await Neighbourhood.find(condition).skip(skip).limit(limit).sort(sortBy);
-    let data = {
-        records:records,
-        total_records:totalRecords
-    }
-
-    return res.status(responseCode.CODES.SUCCESS.OK).send(data);*/
-
-            
-       
 }
 
+exports.cityListing = async (req, res) => {
+   
+    const {  size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] =  -1     
+    
+    if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
+        condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
+    }
+    if (_.has(req.body, ['country_id'])   &&  (req.body['country_id']).length>0){ 
+        condition['country_id'] =  mongoose.Types.ObjectId(req.body['country_id'])  
+    }
+    if (_.has(req.body, ['state_id'])   &&  (req.body['state_id']).length>0){ 
+        condition['state_id'] =  mongoose.Types.ObjectId(req.body['state_id'])  
+    }
+    
+   
+    let totalRecords = await City.count(condition);   
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages',totalPages);
+    let start = pageNumber * size;
+  
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);  
+    
+  
+    City.aggregate([
+        {
+            $match: condition
+        },
+        { 
+            
+            "$lookup": {
+                from: "countries",
+                localField: "country_id",
+                foreignField: "_id",
+                as: "country"
+            }
+        },  
+        { 
+            
+            "$lookup": {
+                from: "states",
+                localField: "state_id",
+                foreignField: "_id",
+                as: "state"
+            }
+        },                
+        {
+            $project: {   
+                'title':1, 
+                'is_active':1, 
+                'zipcodes':1, 
+                'image':1,
+                'state_id':1, 
+                'country_id':1,     
+                'created_at':1,              
+                'country.title':1, 
+                'state.title':1,           
+                                                        
+            },
+        }, 
+        {
+         
+            $skip: skip
+        },
+        { 
+            $limit: limit
+        },
+        { 
+            $sort: sortBy
+        } 
+
+      ], function(err, records){    
+          
+          let data = {
+            records:records,
+            total_records:totalRecords
+          }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+      })
+}
 
 exports.categoryListing = async (req, res) => {
 
@@ -999,13 +1040,13 @@ exports.dashboard = async (req, res) => {
     const propertiesCount = await Property.countDocuments({});
     const userCount = await User.countDocuments({});
     const cityCount = await City.countDocuments({});
-    const neighboursCount = await Neighbourhood.countDocuments({});
+   // const neighboursCount = await Neighbourhood.countDocuments({});
     const propertiesToActionCount = await Property.countDocuments({save_as:'IN-REVIEW'});
     return res.status(responseCode.CODES.SUCCESS.OK).send({
         data:{
             propertiesCount,
             userCount,cityCount,
-            neighboursCount,
+            neighboursCount:0,
             propertiesToActionCount
         }
         

@@ -3,26 +3,20 @@ var mongoose = require('mongoose');
 var config = require('config');
 var Schema = mongoose.Schema
 
-var citySchema = new mongoose.Schema({
-    title: { type: String, trim:true },
-    image: { type: String, trim:true },
+var stateSchema = new mongoose.Schema({
+    title: { type: String, trim:true },   
     count: {  
         type: Number, 
         default:0
-    },
-    zipcodes:[],     
-    country_id: { 
-        type: Schema.Types.ObjectId,
-        ref: 'Country',
-    },
-    state_id: { 
-        type: Schema.Types.ObjectId,
-        ref: 'State',
-    },
+    },  
     is_active: {
         type: Boolean,
         enum : [true, false],
         default: true       
+    },
+    country_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Country',
     },
     created_at: {
         type: Date,
@@ -37,4 +31,4 @@ var citySchema = new mongoose.Schema({
 
 
 
-module.exports.City =  mongoose.model('City', citySchema);
+module.exports.State =  mongoose.model('State', stateSchema);

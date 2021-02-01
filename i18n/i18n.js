@@ -40,7 +40,13 @@ exports.messages = {
         //Required
         "CATEGORY-ID-REQUIRED": "'Category' is required.",
         "CATEGORY-ID-SHOULD-NOT-EMPTY": "'Category' can not be empty.",
-        "IMAGE-REQUIRED":"Image is required and cvan not be empty"
+        "COUNTRY-ID-SHOULD-NOT-EMPTY":"'Country' can not be empty",
+        "CITY-ID-SHOULD-NOT-EMPTY":"'City' can not be empty",
+        "IMAGE-REQUIRED":"Image is required and can not be empty",
+        "COUNTRY-ID-REQUIRED":"Country is requuired",
+        "STATE-ID-REQUIRED":"State is requuired",
+        "STATUS-ID-REQUIRED":"Status is requuired",
+        
     },
     es: {
         // Mensajes de error

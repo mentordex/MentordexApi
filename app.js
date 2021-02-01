@@ -44,7 +44,7 @@ app.get('/',function(req,res){
 // Routes
 // =============================================================
 require("./routes/auth.routes")(app)
-require("./routes/cityNeighbourhood.routes")(app)
+require("./routes/countryStateCity.routes")(app)
 require("./routes/categorySubcategory.routes")(app)
 require("./routes/property.routes")(app)
 require("./routes/propertyType.routes")(app)

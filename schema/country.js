@@ -3,17 +3,17 @@ var mongoose = require('mongoose');
 var config = require('config');
 var Schema = mongoose.Schema
 
-var neighbourhoodSchema = new mongoose.Schema({
-    title: { type: String, trim:true },
-    city_id: { 
-        type: Schema.Types.ObjectId,
-        ref: 'City',
-    },
-    image: { type: String, trim:true },
+var countrySchema = new mongoose.Schema({
+    title: { type: String, trim:true },   
     count: {  
         type: Number, 
         default:0
-    },    
+    },  
+    is_active: {
+        type: Boolean,
+        enum : [true, false],
+        default: true       
+    },
     created_at: {
         type: Date,
         default: new Date()
@@ -25,4 +25,6 @@ var neighbourhoodSchema = new mongoose.Schema({
 
 });
 
-module.exports.Neighbourhood =  mongoose.model('Neighbourhood', neighbourhoodSchema);
+
+
+module.exports.Country =  mongoose.model('Country', countrySchema);

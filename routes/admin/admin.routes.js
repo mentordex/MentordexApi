@@ -1,6 +1,6 @@
 const { procErr } = require('../../utilities/processErrors')
 const { validator } = require('../../validator/auth.validator')
-const { login, adminListing, userListing, cityListing, neighbourhoodListing, propertyTypeListing, propertyListing, amenityListing, changeUserStatus, deleteUser, adminData, verifyToken, forgotPassword, updatePassword, changePassword, changeAdminStatus, deleteAdmin, addUpdateAdmin, changePropertyStatus, dashboard, adminProfile, updateProfile, categoryListing, subcategoryListing, faqcategoryListing   } = require('../../controller/admin/admin.controller')
+const { login, adminListing, userListing, cityListing, stateListing,countryListing, propertyTypeListing, propertyListing, amenityListing, changeUserStatus, deleteUser, adminData, verifyToken, forgotPassword, updatePassword, changePassword, changeAdminStatus, deleteAdmin, addUpdateAdmin, changePropertyStatus, dashboard, adminProfile, updateProfile, categoryListing, subcategoryListing, faqcategoryListing   } = require('../../controller/admin/admin.controller')
 const tokenValidator = require('../../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -14,6 +14,8 @@ module.exports = router => {
     router.post("/api/admin/userListing", procErr, userListing)
 
     router.post("/api/admin/cityListing", procErr, cityListing)
+    router.post("/api/admin/stateListing", procErr, stateListing)
+    router.post("/api/admin/countryListing", procErr, countryListing)
 
     router.post("/api/admin/categoryListing", procErr, categoryListing)
 
