@@ -12,6 +12,8 @@ var userSchema = new mongoose.Schema({
     salt_key: { type: String },
     fax: { type: String },
     phone: { type: String },
+    phone_token: { type: String },
+    email_token: { type: String },
     profile_pic: {
         type: String,
     },
@@ -78,7 +80,12 @@ var userSchema = new mongoose.Schema({
         enum: ['ACTIVE', 'IN-ACTIVE'],
         default: 'IN-ACTIVE'
     },
-    is_verified: {
+    is_email_verified: {
+        type: String,
+        enum: ['VERIFIED', 'NOT-VERIFIED'],
+        default: 'NOT-VERIFIED'
+    },
+    is_phone_verified: {
         type: String,
         enum: ['VERIFIED', 'NOT-VERIFIED'],
         default: 'NOT-VERIFIED'
@@ -104,7 +111,7 @@ var userSchema = new mongoose.Schema({
 userSchema.pre('save', async function save(next) {
     if (!this.isModified('password')) return next();
     try {
-        console.log('yes');
+        //console.log('yes');
         const salt = await sha1(`${this.email}${this.created_at}`)
         const password = await md5(`${this.password}`)
         this.password = await md5(`${password}${salt}`)
@@ -129,7 +136,7 @@ userSchema.methods.generateToken = async function(saltKey) {
     return md5(saltKey);
 }
 
-userSchema.methods.generateResetPasswordToken = async function(saltKey) {
+userSchema.methods.generateRandomToken = async function(saltKey) {
 
 
     return md5(`${saltKey}-${new Date()}`);

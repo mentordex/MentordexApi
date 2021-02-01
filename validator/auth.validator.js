@@ -77,6 +77,30 @@ exports.validator = functionName => {
                     .exists().withMessage('passwordRequiredField')
                 ]
             }
+
+        case 'getMentorDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'resendMentorEmailVerification':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'resendMentorPhoneVerification':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
     }
 
 }

@@ -1,7 +1,7 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing } = require('../controller/auth.controller')
-const tokenValidator = require('../utilities/token');//calling token checking middleware
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification } = require('../controller/auth.controller')
+const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
 module.exports = router => {
@@ -24,20 +24,27 @@ module.exports = router => {
 
     router.post("/api/updatePassword", validator('updatePassword'), procErr, updatePassword)
 
-    router.post("/api/updateProfileInformation",  procErr, updateProfileInformation)
+    router.post("/api/updateProfileInformation", procErr, updateProfileInformation)
 
-    router.post("/api/contact",  procErr, contact)
+    router.post("/api/contact", procErr, contact)
 
-    router.post("/api/changePassword",  procErr, changePassword)
+    router.post("/api/changePassword", procErr, changePassword)
 
-    router.post("/api/updateMedia",  procErr, updateMedia)
+    router.post("/api/updateMedia", procErr, updateMedia)
 
-    router.post("/api/memberListing",  procErr, memberListing)
+    router.post("/api/memberListing", procErr, memberListing)
 
-    router.post("/api/contactToAdmin",  procErr, contactToAdmin)
-    
-    router.get("/api/offices",  procErr, officeListing)
+    router.post("/api/contactToAdmin", procErr, contactToAdmin)
 
-    router.get("/api/team",  procErr, teamListing)
-    
+    router.get("/api/offices", procErr, officeListing)
+
+    router.get("/api/team", procErr, teamListing)
+
+
+
+    /* Mentor Routes */
+    router.post("/api/getMentorDetails", [validator('getMentorDetails')], procErr, getMentorDetails)
+    router.post("/api/resendMentorEmailVerification", [validator('resendMentorEmailVerification')], procErr, resendMentorEmailVerification)
+    router.post("/api/resendMentorPhoneVerification", [validator('resendMentorPhoneVerification')], procErr, resendMentorPhoneVerification)
+
 }
