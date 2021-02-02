@@ -184,8 +184,6 @@ exports.signup = async(req, res) => {
 
 }
 
-
-
 exports.userProfileData = async(req, res) => {
 
 
@@ -204,11 +202,9 @@ exports.userProfileData = async(req, res) => {
 
 }
 
-
-
 exports.verifyToken = async(req, res) => {
 
-    console.log('req', req.body);
+    //console.log('req', req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
     const { token } = req.body
 
@@ -223,7 +219,7 @@ exports.verifyToken = async(req, res) => {
 
 exports.updatePassword = async(req, res) => {
 
-    console.log('req', req.body);
+    //console.log('req', req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
     const { token, password } = req.body
 
@@ -241,6 +237,7 @@ exports.updatePassword = async(req, res) => {
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
 }
+
 exports.updateProfileInformation = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
@@ -266,7 +263,6 @@ exports.updateProfileInformation = async(req, res) => {
     });
 
 }
-
 
 exports.updateMedia = async(req, res) => {
 
@@ -323,7 +319,6 @@ exports.changePassword = async(req, res) => {
     return res.status(responseCode.CODES.SUCCESS.OK).send(true);
 
 }
-
 
 exports.contact = async(req, res) => {
 
@@ -508,7 +503,7 @@ exports.getMentorDetails = async(req, res) => {
 
 exports.resendMentorPhoneVerification = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID } = req.body
+    const { userID, phoneToken } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
@@ -516,6 +511,38 @@ exports.resendMentorPhoneVerification = async(req, res) => {
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: '0000' } }, { new: true })
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+exports.submitMentorPhoneVerification = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, phoneToken } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    if (phoneToken != existingUser.phone_token) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OTP-INVALID'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: '' } }, { new: true })
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+exports.verifyMentorEmail = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, emailToken } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    if (emailToken != existingUser.email_token) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-VERIFY-FAILED'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { email_token: '' } }, { new: true })
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 }
@@ -556,6 +583,7 @@ exports.resendMentorEmailVerification = async(req, res) => {
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 }
+
 
 async function sendEmail(to, subject, message) {
     const transporter = await nodemailer.createTransport({

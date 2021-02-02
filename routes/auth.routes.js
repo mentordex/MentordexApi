@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail } = require('../controller/auth.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -46,5 +46,7 @@ module.exports = router => {
     router.post("/api/getMentorDetails", [validator('getMentorDetails')], procErr, getMentorDetails)
     router.post("/api/resendMentorEmailVerification", [validator('resendMentorEmailVerification')], procErr, resendMentorEmailVerification)
     router.post("/api/resendMentorPhoneVerification", [validator('resendMentorPhoneVerification')], procErr, resendMentorPhoneVerification)
+    router.post("/api/submitMentorPhoneVerification", [validator('submitMentorPhoneVerification')], procErr, submitMentorPhoneVerification)
+    router.post("/api/verifyMentorEmail", [validator('verifyMentorEmail')], procErr, verifyMentorEmail)
 
 }
