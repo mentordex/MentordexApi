@@ -1,4 +1,4 @@
-const _ = require('lodash'); 
+const _ = require('lodash');
 const config = require('config');
 const { User } = require('../schema/user');
 const { Dashboard } = require('../schema/dashboard');
@@ -9,242 +9,252 @@ const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
 
-exports.emailExist = async (req, res) => {
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(config.get('sendgrid.key'));
 
-    
+templates = {
+    mentor_signup: "d-a17aa33d0e4045aea26bd661787db861",
+    forgot_password:"d-ed1b699311b046358f8946a6a253d19e"
+};
+
+
+exports.emailExist = async(req, res) => {
+
+
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne(
-        {email:email},
-        { _id: 1 }
-    );
-    console.log('existingUser',existingUser)
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));    
-   
+    let existingUser = await User.findOne({ email: email }, { _id: 1 });
+    console.log('existingUser', existingUser)
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
 }
 
 /*
-* Here we would probably call the DB to confirm the user exists
-* Then validate if they're authorized to login
-* Then confirm their password
-* Create a JWT or a cookie
-* And finally send it back if all's good
-*/
-exports.login = async (req, res) => {
+ * Here we would probably call the DB to confirm the user exists
+ * Then validate if they're authorized to login
+ * Then confirm their password
+ * Create a JWT or a cookie
+ * And finally send it back if all's good
+ */
+exports.login = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email, password } = req.body
 
-    user = await User.findOne({ "email": email  },{ email: 1, role:1, salt_key:1, created_at: 1, password:1, is_active:1 });
-    if (!user) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));  
+    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, is_active: 1 });
+    if (!user) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     //checking password match
     const isValidPassword = await userObject.passwordCompare(user.salt_key, user.password, req.body.password);
 
     if (!isValidPassword) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('PASSWORD-MISMATCH'));
 
-    if (user['is_active']!='ACTIVE') return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USER-NOT-ACTIVE'));
-    
+    if (user['is_active'] != 'ACTIVE') return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USER-NOT-ACTIVE'));
 
-   
-    const token = await userObject.generateToken(user.salt_key);//generate token
-    console.log('token',token);
+
+
+    const token = await userObject.generateToken(user.salt_key); //generate token
+    console.log('token', token);
 
     await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
 
-    
+
 
     res.setHeader('x-mentordex-auth-token', token);
-    res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')   
-    
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id','name','email', 'role']));    
-   
+    res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'name', 'email', 'role']));
+
 }
 
 
 /*
-* Here we would probably call the DB to confirm the user exists
-* Then validate if they're authorized to login
-* Create a JWT or a cookie
-* Send an email to that address with the URL to login directly to change their password
-* And finally let the user know their email is waiting for them at their inbox
-*/
-exports.forgotPassword = async (req, res) => {
-
-    // If no validation errors, get the req.body objects that were validated and are needed
-    const { email } = req.body
-
-   //checking unique email
-   let existingUser = await User.findOne(
-        {email:email},
-        { name:1, email:1, salt_key: 1 }
-    );
-    //console.log('salt_key',existingUser.salt_key);
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
-
-    const resetPasswordToken = await userObject.generateResetPasswordToken(existingUser.salt_key);//generate reset password token 
-
-    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { reset_password_token: resetPasswordToken, modified_at:new Date() } }, { new: true })
-
-    const link = `${config.get('webEndPoint')}/authorization/reset-password/${resetPasswordToken}`
-
-    const msg = {
-        to: existingUser.email,        
-        subject: req.polyglot.t('FORGOT-PASSWORD'),
-       // text: req.polyglot.t('YOU-ARE-IN'),
-        html: `Hi ,<br>Here’s your forgot password <a href="${link}">link</a>.<br> 
-        <br>
-        Let me know if you need anything.<br> 
-        <br>
-        Thanks.`,
-    };
-    sendEmail(msg.to, msg.subject, msg.html);
-    
-    // Since all the validations passed, we send the emailSent message
-    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser); 
-}
-
-
-
-/*
-* Here we would probably call the DB to confirm the user exists
-* Then validate if they're authorized to login
-* Create a JWT or a cookie
-* Send an email to that address with the URL to login directly to change their password
-* And finally let the user know their email is waiting for them at their inbox
-*/
-exports.signup = async (req, res) => {
+ * Here we would probably call the DB to confirm the user exists
+ * Then validate if they're authorized to login
+ * Create a JWT or a cookie
+ * Send an email to that address with the URL to login directly to change their password
+ * And finally let the user know their email is waiting for them at their inbox
+ */
+exports.forgotPassword = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne(
-        {email:email},
-        { _id: 1 }
-    );
+    let existingUser = await User.findOne({ email: email });
+    //console.log('salt_key',existingUser.salt_key);
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    const resetPasswordToken = await userObject.generateRandomToken(existingUser.salt_key); //generate reset password token 
+
+    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { reset_password_token: resetPasswordToken, modified_at: new Date() } }, { new: true })
+
+    const link = `${config.get('webEndPoint')}/authorization/reset-password/${resetPasswordToken}`
+
     
-    if (existingUser) return res.status(400).send(req.polyglot.t('EMAIL-EXIST'));    
-   
+
+    const msg = {
+        to: existingUser.email,
+        from: config.get('sendgrid.from'),
+        templateId: templates['forgot_password'],
+        dynamic_template_data: {
+            name: existingUser.first_name + ' ' + existingUser.last_name,
+            reset_password_link: link
+        }
+    };
+    sgMail.send(msg, (error, result) => {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log("That's wassup!");
+        }
+    });
+
+
+    // Since all the validations passed, we send the emailSent message
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+
+
+/*
+ * Here we would probably call the DB to confirm the user exists
+ * Then validate if they're authorized to login
+ * Create a JWT or a cookie
+ * Send an email to that address with the URL to login directly to change their password
+ * And finally let the user know their email is waiting for them at their inbox
+ */
+exports.signup = async(req, res) => {
+
+
+    //console.log(req.body);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { email } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ email: email }, { _id: 1 });
+
+    if (existingUser) return res.status(400).send(req.polyglot.t('EMAIL-EXIST'));
+
 
     //save user 
-    newUser = new User(_.pick(req.body, ['name','email', 'password','role', 'account_type', 'is_active', 'is_verified','salt_key', 'device_data', 'created_at','modified_at']));
+    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'created_at', 'modified_at']));
 
 
-    
-    newUser.save(async function (err, user) {
-        
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));   
 
-        const token = await userObject.generateToken(user.salt_key);//generate token
-        //console.log('token',token);
+    newUser.save(async function(err, user) {
 
-        await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+        if (err) {
+            console.log(err);
+            return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        }
+        const token = await userObject.generateToken(user.salt_key); //generate token
+        const email_token = await userObject.generateToken(user.salt_key); //generate token
+        const phone_token = '0000';
+
+        const verify_link = `${config.get('webEndPoint')}/mentors/verify-email/${user._id}/${email_token}`
+            //console.log('token',token);
+
+        await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
 
         const msg = {
             to: user.email,
             from: config.get('sendgrid.from'),
-            subject: req.polyglot.t('REGISTER-SUCCESSFULL'),
-            text: req.polyglot.t('YOU-ARE-IN'),
-            html: `Hi ${user.name},<br>You have joined a community of online property agent/agency just like you!<br> 
-            <br>
-            Let me know if you need anything.<br> 
-            <br>
-            Thanks.`,
+            templateId: templates['mentor_signup'],
+            dynamic_template_data: {
+                name: user.first_name + ' ' + user.last_name,
+                verify_link: verify_link,
+                email: user.email
+            }
         };
-        //sgMail.send(msg);
+        sgMail.send(msg, (error, result) => {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log("That's wassup!");
+            }
+        });
 
         res.setHeader('x-mentordex-auth-token', token);
-        res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')   
-        
-        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id','name','email', 'role']));
+        res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
 
         //return res.status(200).send(userInfo);
-        
+
     });
 
 
 
 }
 
+exports.userProfileData = async(req, res) => {
 
 
-exports.userProfileData = async (req, res) => {
-
-    console.log('req',req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
     const { userID } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne(
-        {_id:userID}
-    );
-    
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));    
-   
+    let existingUser = await User.findOne({ _id: userID });
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id','name','email','office_phone','fax','profile_pic','mobile','address','about_me','skype', 'website', 'facebook', 'twitter', 'linkedin', 'instagram', 'google_plus', 'youtube', 'pinterest', 'vimeo', 'role','created_at']));
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'name', 'email', 'office_phone', 'fax', 'profile_pic', 'mobile', 'address', 'about_me', 'skype', 'website', 'facebook', 'twitter', 'linkedin', 'instagram', 'google_plus', 'youtube', 'pinterest', 'vimeo', 'role', 'created_at']));
 
 
 
 }
 
+exports.verifyToken = async(req, res) => {
 
-exports.verifyToken = async (req, res) => {
-
-    console.log('req',req.body);
+    //console.log('req', req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
     const { token } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne(
-        {reset_password_token:token},
-        { _id: 1 }
-    );
-    
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('PASSWORD-RESET-TOKEN'));    
-   
+    let existingUser = await User.findOne({ reset_password_token: token }, { _id: 1 });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('PASSWORD-RESET-TOKEN'));
+
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
 }
 
-exports.updatePassword = async (req, res) => {
+exports.updatePassword = async(req, res) => {
 
-    console.log('req',req.body);
+    //console.log('req', req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
     const { token, password } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne(
-        {reset_password_token:token},
-        { _id: 1, email:1, salt_key:1, created_at:1 }
-    );
-    
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));    
-   
-    const encryptedPassword = await userObject.encryptPassword(existingUser, password);//encrypted password
+    let existingUser = await User.findOne({ reset_password_token: token }, { _id: 1, email: 1, salt_key: 1, created_at: 1 });
 
-    
-    
-    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { password: encryptedPassword, modified_at:new Date(), reset_password_token:'' } }, { new: true })
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    const {encryptedPassword, salt} = await userObject.encryptPassword(existingUser, password); //encrypted password
+
+
+
+    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { salt_key:salt, password: encryptedPassword, modified_at: new Date(), reset_password_token: '' } }, { new: true })
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
 }
-exports.updateProfileInformation = async (req, res) => {
+
+exports.updateProfileInformation = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
     const { user_id, name, office_phone, fax, mobile, address, about_me, profile_pic } = req.body
 
-   //checking unique email
-   let existingUser = await User.findOne(
-        {_id:user_id}
-    );
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));  
+    //checking unique email
+    let existingUser = await User.findOne({ _id: user_id });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
 
     existingUser.name = name;
@@ -254,8 +264,8 @@ exports.updateProfileInformation = async (req, res) => {
     existingUser.profile_pic = profile_pic
     existingUser.address = address
     existingUser.about_me = about_me
-    existingUser.save(function (err, user) {
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));   
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
@@ -263,17 +273,14 @@ exports.updateProfileInformation = async (req, res) => {
 
 }
 
-
-exports.updateMedia = async (req, res) => {
+exports.updateMedia = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
     const { user_id, skype, website, facebook, twitter, linkedin, instagram, google_plus, youtube, pinterest, vimeo } = req.body
 
-   //checking unique email
-   let existingUser = await User.findOne(
-        {_id:user_id}
-    );
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));  
+    //checking unique email
+    let existingUser = await User.findOne({ _id: user_id });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
 
     existingUser.skype = skype;
@@ -286,8 +293,8 @@ exports.updateMedia = async (req, res) => {
     existingUser.youtube = youtube
     existingUser.pinterest = pinterest
     existingUser.vimeo = vimeo
-    existingUser.save(function (err, user) {
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));   
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
@@ -295,60 +302,55 @@ exports.updateMedia = async (req, res) => {
 
 }
 
-exports.changePassword = async (req, res) => {
+exports.changePassword = async(req, res) => {
 
     const { user_id, old_password, password } = req.body
 
-   //checking unique email
-   let existingUser = await User.findOne(
-        {_id:user_id}
-    );
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));  
+    //checking unique email
+    let existingUser = await User.findOne({ _id: user_id });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    const encryptedOldPassword = await userObject.encryptPassword(existingUser, old_password);//encrypted password
-    const encryptedPassword = await userObject.encryptPassword(existingUser, password);//encrypted password
+    const encryptedOldPassword = await userObject.encryptPassword(existingUser, old_password); //encrypted password
+    const encryptedPassword = await userObject.encryptPassword(existingUser, password); //encrypted password
 
 
-    if(encryptedOldPassword != existingUser.password){
+    if (encryptedOldPassword != existingUser.password) {
         return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OLD-NEW-PASSWORD-MISMATCH'));
     }
 
-    if(encryptedPassword == existingUser.password){
+    if (encryptedPassword == existingUser.password) {
         return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USE-ANOTHER-PASSWORD'));
     }
 
-    
 
-    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { password: encryptedPassword, modified_at:new Date() } }, { new: true })
+
+    await User.findOneAndUpdate({ email: existingUser.email }, { $set: { password: encryptedPassword, modified_at: new Date() } }, { new: true })
     return res.status(responseCode.CODES.SUCCESS.OK).send(true);
 
 }
 
-
-exports.contact = async (req, res) => {
+exports.contact = async(req, res) => {
 
     const { user_id } = req.body
 
-   //checking unique email
-   let existingUser = await User.findOne(
-        {_id:user_id}
-    );
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));  
+    //checking unique email
+    let existingUser = await User.findOne({ _id: user_id });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    newContact = new Contact(_.pick(req.body, ['user_id','email', 'name','phone', 'message',  'created_at']));
-    
-    newContact.save(function (err, contact) {
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));   
+    newContact = new Contact(_.pick(req.body, ['user_id', 'email', 'name', 'phone', 'message', 'created_at']));
+
+    newContact.save(function(err, contact) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
 
-        Dashboard.findOneAndUpdate({ user_id: user_id }, { $inc: { contact_request_count: 1 } }, { new: true, upsert: true },function(err, data){
-                    
+        Dashboard.findOneAndUpdate({ user_id: user_id }, { $inc: { contact_request_count: 1 } }, { new: true, upsert: true }, function(err, data) {
+
         })
 
         const msg = {
             to: existingUser.email,
             from: config.get('sendgrid.from'),
-            subject: req.polyglot.t('CONTACT-REQUEST'),          
+            subject: req.polyglot.t('CONTACT-REQUEST'),
             html: `Hi ${existingUser.name},<br>You have received a new contact request.<br> 
             <br>
             
@@ -365,13 +367,13 @@ exports.contact = async (req, res) => {
 
 }
 
-exports.contactToAdmin = async (req, res) => {
+exports.contactToAdmin = async(req, res) => {
 
-    
+
     const msg = {
         to: config.get('webAdminEmail'),
         from: config.get('sendgrid.from'),
-        subject: req.polyglot.t('CONTACT-REQUEST'),          
+        subject: req.polyglot.t('CONTACT-REQUEST'),
         html: `Hi Admin,<br>You have received a new contact request.<br> 
         <br>
         
@@ -387,122 +389,222 @@ exports.contactToAdmin = async (req, res) => {
 
 }
 
-exports.officeListing = async (req, res) => {
+exports.officeListing = async(req, res) => {
 
-    
+
     Office.find({}, function(err, result) {
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);
     });
-   
+
 }
 
 
-exports.teamListing = async (req, res) => {
+exports.teamListing = async(req, res) => {
 
-    
+
     Team.find({}, function(err, result) {
-        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);
     });
-   
+
 }
 
 
-exports.memberListing = async (req, res) => {
+exports.memberListing = async(req, res) => {
 
-  
+
 
     const { search, size, pageNumber, sort_dir } = req.body
     let condition = {};
-    condition['is_active'] =  'ACTIVE';
-    condition['is_verified'] =  'VERIFIED';
-    let sortBy={}
-    sortBy['created_at'] =  (sort_dir=='asc')?-1:1
-   
+    condition['is_active'] = 'ACTIVE';
+    condition['is_verified'] = 'VERIFIED';
+    let sortBy = {}
+    sortBy['created_at'] = (sort_dir == 'asc') ? -1 : 1
 
-    if((search).length>0){     
-        condition['name'] =  { $regex: search, $options: 'i' }   
+
+    if ((search).length > 0) {
+        condition['name'] = { $regex: search, $options: 'i' }
     }
-    
-    
+
+
     let totalRecords = await User.count(condition);
-    console.log('totalRecords',totalRecords);
+    console.log('totalRecords', totalRecords);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
-    console.log('totalPages',totalPages);
+    console.log('totalPages', totalPages);
     let start = pageNumber * size;
-  
+
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
     let limit = parseInt(size);
-  
-    
-  //  let members = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
 
-    User.aggregate([
-        {
+
+    //  let members = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
+
+    User.aggregate([{
             $match: condition
         },
-        { 
-            
-        "$lookup": {
-            from: "dashboards",
-            localField: "_id",
-            foreignField: "user_id",
-            as: "dashboard",            
-            }
-        },         
         {
-            $project: {   
-                'name':1,
-                'email':1, 
-                'fax':1, 
-                'mobile':1, 
-                'office_phone':1,
-                'profile_pic':1,
-                'facebook':1,
-                'twitter':1,
-                'instagram':1,
-                'google_plus':1,
-                'pinterest':1,
-                'role':1,                
-                'dashboard.property_count':1, 
+
+            "$lookup": {
+                from: "dashboards",
+                localField: "_id",
+                foreignField: "user_id",
+                as: "dashboard",
+            }
+        },
+        {
+            $project: {
+                'name': 1,
+                'email': 1,
+                'fax': 1,
+                'mobile': 1,
+                'office_phone': 1,
+                'profile_pic': 1,
+                'facebook': 1,
+                'twitter': 1,
+                'instagram': 1,
+                'google_plus': 1,
+                'pinterest': 1,
+                'role': 1,
+                'dashboard.property_count': 1,
             },
         },
         { $skip: skip },
         { $limit: limit }
 
- 
 
-      ], function(err, members){    
-          
-          let data = {
-            records:members,
-            total_records:totalRecords
-          }
+
+    ], function(err, members) {
+
+        let data = {
+            records: members,
+            total_records: totalRecords
+        }
         return res.status(responseCode.CODES.SUCCESS.OK).send(data);
-      })
+    })
 
-   
 
-   
+
+
 }
 
 
 
-async function sendEmail(to,subject,message){
-    const transporter =  await nodemailer.createTransport({
+/* Mentor Functions */
+
+exports.getMentorDetails = async(req, res) => {
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+
+}
+
+exports.resendMentorPhoneVerification = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, phoneToken } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: '0000' } }, { new: true })
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+exports.submitMentorPhoneVerification = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, phoneToken } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    if (phoneToken != existingUser.phone_token) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OTP-INVALID'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: '' } }, { new: true })
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+exports.verifyMentorEmail = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, emailToken } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    if (emailToken != existingUser.email_token) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-VERIFY-FAILED'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { email_token: '' } }, { new: true })
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+exports.resendMentorEmailVerification = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    const email_token = await userObject.generateRandomToken(existingUser.salt_key); //generate token
+
+    const verify_link = `${config.get('webEndPoint')}/mentors/verify-email/${existingUser._id}/${email_token}`
+        //console.log('token',token);
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { email_token: email_token } }, { new: true })
+
+    const msg = {
+        to: existingUser.email,
+        from: config.get('sendgrid.from'),
+        templateId: templates['mentor_signup'],
+        dynamic_template_data: {
+            name: existingUser.first_name + ' ' + existingUser.last_name,
+            verify_link: verify_link,
+            email: existingUser.email
+        }
+    };
+    sgMail.send(msg, (error, result) => {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log("That's wassup!");
+        }
+    });
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+}
+
+
+async function sendEmail(to, subject, message) {
+    const transporter = await nodemailer.createTransport({
         host: config.get('nodemailer.host'),
         port: config.get('nodemailer.port'),
         secure: config.get('nodemailer.secure'), // true for 465, false for other ports
         auth: {
-          user: config.get('nodemailer.auth.user'), // generated ethereal user
-          pass: config.get('nodemailer.auth.pass'), // generated ethereal password
+            user: config.get('nodemailer.auth.user'), // generated ethereal user
+            pass: config.get('nodemailer.auth.pass'), // generated ethereal password
         },
     });
-   
+
     await transporter.sendMail({
         from: config.get('fromEmail'), // sender address
         to: to, // list of receivers
@@ -511,4 +613,3 @@ async function sendEmail(to,subject,message){
         html: message, // html body
     });
 }
-

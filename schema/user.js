@@ -5,86 +5,105 @@ var md5 = require('md5');
 var config = require('config');
 
 var userSchema = new mongoose.Schema({
-    name: { type: String, trim:true },
-    email: { type: String, trim:true },
-    password: { type: String },    
-    salt_key: { type: String },  
-    fax:   { type: String },  
-    mobile:   { type: String },
-    office_phone:   { type: String },
-    profile_pic:{
+    first_name: { type: String, trim: true },
+    last_name: { type: String, trim: true },
+    email: { type: String, trim: true },
+    password: { type: String },
+    salt_key: { type: String },
+    fax: { type: String },
+    phone: { type: String },
+    phone_token: { type: String },
+    email_token: { type: String },
+    profile_pic: {
         type: String,
     },
-    address:{
+    address: {
         type: String,
     },
-    about_me:{
+    about_me: {
         type: String,
     },
-    skype:{
+    skype: {
         type: String,
     },
-    website:{
+    website: {
         type: String,
     },
-    facebook:{
+    facebook: {
         type: String,
     },
-    twitter:{
+    twitter: {
         type: String,
     },
-    linkedin:{
+    linkedin: {
         type: String,
     },
-    instagram:{
+    instagram: {
         type: String,
     },
-    google_plus:{
+    google_plus: {
         type: String,
     },
-    youtube:{
+    youtube: {
         type: String,
     },
-    pinterest:{
+    pinterest: {
         type: String,
     },
-    vimeo:{
+    vimeo: {
+        type: String,
+    },
+    country_id: {
+        type: Number,
+    },
+    state_id: {
+        type: Number,
+    },
+    city_id: {
+        type: Number,
+    },
+    zipcode: {
         type: String,
     },
     role: {
         type: String,
-        enum : ['PARENT', 'MENTOR'],
-        default: 'PARENT'       
+        enum: ['PARENT', 'MENTOR'],
+        default: 'PARENT'
     },
-    account_type:{
+    account_type: {
         type: String,
-        enum : ['WEBSITE', 'FACEBOOK','GOOGLE'],
+        enum: ['WEBSITE', 'FACEBOOK', 'APPLE'],
         default: 'WEBSITE'
     },
-    is_active:{
+    is_active: {
         type: String,
-        enum : ['ACTIVE', 'IN-ACTIVE'],
-        default: 'ACTIVE'
+        enum: ['ACTIVE', 'IN-ACTIVE'],
+        default: 'IN-ACTIVE'
     },
-    is_verified:{
+    is_email_verified: {
         type: String,
-        enum : ['VERIFIED', 'NOT-VERIFIED'],
-        default: 'VERIFIED'
+        enum: ['VERIFIED', 'NOT-VERIFIED'],
+        default: 'NOT-VERIFIED'
     },
-    device_data:{
+    is_phone_verified: {
+        type: String,
+        enum: ['VERIFIED', 'NOT-VERIFIED'],
+        default: 'NOT-VERIFIED'
+    },
+    device_data: {
         type: String,
     },
-    auth_token:{ type: String },
-    reset_password_token:{ type: String },
+    auth_token: { type: String },
+    reset_password_token: { type: String },
     created_at: {
         type: Date,
         default: new Date()
     },
     modified_at: {
         type: Date,
-        default: new Date()      
+        default: new Date()
     }
-         
+
 
 });
 
@@ -92,10 +111,10 @@ var userSchema = new mongoose.Schema({
 userSchema.pre('save', async function save(next) {
     if (!this.isModified('password')) return next();
     try {
-        console.log('yes');
-        const salt = await sha1(`${this.email}${this.created_at}`) 
-        const password = await md5(`${this.password}`) 
-        this.password = await md5(`${password}${salt}`) 
+        //console.log('yes');
+        const salt = await sha1(`${this.email}${this.created_at}`)
+        const epassword = await md5(`${this.password}`)
+        this.password = await md5(`${epassword}${salt}`)
         this.salt_key = salt;
         return next();
     } catch (err) {
@@ -103,32 +122,34 @@ userSchema.pre('save', async function save(next) {
     }
 });
 
-userSchema.methods.passwordCompare = async function (saltKey, savedPassword, requestedPassword) {
+userSchema.methods.passwordCompare = async function(saltKey, savedPassword, requestedPassword) {
+console.log('saltKey',saltKey)
 
-  
     const password = await md5(`${requestedPassword}`)
-    const encryptedPassword = await md5(`${password}${saltKey}`)   
-    return (encryptedPassword == savedPassword)?true:false    
+    const encryptedPassword = await md5(`${password}${saltKey}`)
+    console.log('encryptedPassword',encryptedPassword)
+    console.log('savedPassword',savedPassword)
+    return (encryptedPassword == savedPassword) ? true : false
 }
 
-userSchema.methods.generateToken = async function (saltKey) {
+userSchema.methods.generateToken = async function(saltKey) {
 
-  
-    return md5(saltKey);  
+
+    return md5(saltKey);
 }
 
-userSchema.methods.generateResetPasswordToken = async function (saltKey) {
+userSchema.methods.generateRandomToken = async function(saltKey) {
 
-  
-    return md5(`${saltKey}-${new Date()}`);  
+
+    return md5(`${saltKey}-${new Date()}`);
 }
 
-userSchema.methods.encryptPassword = async function (userData, password) {
+userSchema.methods.encryptPassword = async function(userData, password) {
 
-    const salt = await sha1(`${userData.email}${userData.created_at}`) 
-    const MD5Password = await md5(`${password}`) 
-    const encryptedPassword = await md5(`${MD5Password}${salt}`)    
-    return encryptedPassword;  
+    const salt = await sha1(`${userData.email}${userData.created_at}`)
+    const MD5Password = await md5(`${password}`)
+    const encryptedPassword = await md5(`${MD5Password}${salt}`)
+    return {encryptedPassword,salt };
 }
 
-module.exports.User =  mongoose.model('User', userSchema);
+module.exports.User = mongoose.model('User', userSchema);
