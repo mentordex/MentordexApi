@@ -1,6 +1,6 @@
 const { validator } = require('../validator/countryStateCity.validator')
 const { procErr } = require('../utilities/processErrors')
-const { addCity, addState, addCountry, cityListing, countryListing, stateListing, deleteCountry, deleteCity, deleteState} = require('../controller/countryStateCity.controller')
+const { addCity, addState, addCountry, cityListing, countryListing, stateListing, deleteCountry, deleteCity, deleteState, cityInfo} = require('../controller/countryStateCity.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -14,7 +14,9 @@ module.exports = router => {
 
     router.get("/api/country/listing", procErr, countryListing)
     router.post("/api/state/listing", procErr, stateListing)
-    router.get("/api/city/listing",  procErr, cityListing)
+    router.post("/api/city/listing",  procErr, cityListing)
+    router.post("/api/city/cityInfo",  procErr, cityInfo)
+    
 
     router.post("/api/state/deleteState", procErr, deleteState)
     router.post("/api/city/deleteCity", procErr, deleteCity)

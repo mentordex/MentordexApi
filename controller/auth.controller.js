@@ -8,6 +8,7 @@ const { Team } = require('../schema/team');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
+var mongoose = require('mongoose');
 
 const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(config.get('sendgrid.key'));
@@ -69,6 +70,48 @@ exports.login = async(req, res) => {
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'name', 'email', 'role']));
 
+}
+exports.updateParentInfo = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const user_id  = mongoose.Types.ObjectId(req.body['user_id']);
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: user_id });
+
+    var userInfo = {}
+    userInfo['modified_at'] = new Date()
+    if('lstate_id' in req.body && (req.body.lstate_id).length>0){
+        userInfo['lstate_id'] = req.body.lstate_id
+    }
+    if('lcity_id' in req.body && (req.body.lcity_id).length>0){
+        userInfo['lcity_id'] = req.body.lcity_id
+    }
+    if('lzipcode' in req.body && (req.body.lzipcode).length>0){
+        userInfo['lzipcode'] = req.body.lzipcode
+    }
+    if('category_id1' in req.body && (req.body.category_id1).length>0){
+        userInfo['category_id1'] = req.body.category_id1
+    }
+    if('subcategory_id1' in req.body && (req.body.subcategory_id1).length>0){
+        userInfo['subcategory_id1'] = req.body.subcategory_id1
+    }
+    if('category_id2' in req.body && (req.body.category_id2).length>0){
+        userInfo['category_id2'] = req.body.category_id2
+    }
+    if('subcategory_id2' in req.body && (req.body.subcategory_id2).length>0){
+        userInfo['subcategory_id2'] = req.body.subcategory_id2
+    }
+    if('category_id3' in req.body && (req.body.category_id3).length>0){
+        userInfo['category_id3'] = req.body.category_id3
+    }
+    if('subcategory_id3' in req.body && (req.body.subcategory_id3).length>0){
+        userInfo['subcategory_id3'] = req.body.subcategory_id3
+    }
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    await User.findOneAndUpdate({_id: user_id }, { $set:userInfo }, { new: true })
+    return res.status(responseCode.CODES.SUCCESS.OK).send(true);
 }
 
 

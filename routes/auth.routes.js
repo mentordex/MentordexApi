@@ -1,12 +1,13 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo } = require('../controller/auth.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
 module.exports = router => {
 
     // POST route to mock a login  endpoint
+    router.post("/api/updateParentInfo",  updateParentInfo)
     router.post("/api/checkEmail", [validator('emailExist')], procErr, emailExist)
 
     // POST route to mock a login  endpoint

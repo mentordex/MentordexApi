@@ -157,18 +157,28 @@ exports.stateListing = async (req, res) => {
        
 }
 exports.cityListing = async (req, res) => {
-    const condition = []
+    const condition = {}
     if('state_id' in req.body){
         condition['state_id'] = mongoose.Types.ObjectId(req.body['state_id']);
-    }
-    if('country_id' in req.body){
-        condition['country_id'] = mongoose.Types.ObjectId(req.body['country_id']);
     }
     City.find(condition, function(err, result) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
-    }).sort({created_at: -1}).limit(8);  
+    }) 
+      
+}
+
+exports.cityInfo = async (req, res) => {
+    const condition = {}
+    if('city_id' in req.body){
+        condition['_id'] = mongoose.Types.ObjectId(req.body['city_id']);
+    }
+    City.findOne(condition, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); 
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);  
+    }) 
       
 }
 
