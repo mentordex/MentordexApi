@@ -21,6 +21,7 @@ exports.addCountry = async (req, res) => {
         
         if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
 
+        req.body['modified_at'] = new Date() 
         //save Country 
         Country.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: req.body }, { new: true }, function (err, type) {
             
@@ -58,6 +59,7 @@ exports.addState = async (req, res) => {
         
         if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
 
+        req.body['modified_at'] = new Date()
         //save State 
         State.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: req.body }, { new: true }, function (err, type) {
             
@@ -94,6 +96,7 @@ exports.addCity = async (req, res) => {
         
         if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
 
+        req.body['modified_at'] = new Date()
         //save city 
         City.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: req.body }, { new: true }, function (err, type) {
             
@@ -235,13 +238,19 @@ exports.deleteCountry = async (req, res) => {
     if (record){
         let stateRecord = await State.findOne({country_id:mongoose.Types.ObjectId(record['id'])}, { _id: 1 } );
         Country.deleteOne({ _id:mongoose.Types.ObjectId(req.body.id) }, function (err, doc) {
-            if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+            if (err) return res.status(500).send({error:1});
             State.deleteMany({ country_id:mongoose.Types.ObjectId(req.body.id) }, function (err, doc) {
-                if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
-                City.deleteMany({ state_id:mongoose.Types.ObjectId(stateRecord._id) }, function (err, doc) {
-                    if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                if (err) return res.status(500).send({error:2});
+                if(stateRecord== null){
                     return res.status(responseCode.CODES.SUCCESS.OK).send(true);
-                });
+                }else{
+                    City.deleteMany({ state_id:mongoose.Types.ObjectId(stateRecord._id) }, function (err, doc) {
+                        if (err) return res.status(500).send({error:3});
+                        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+                    });
+                }
+               
+                
                 
             });
         });
