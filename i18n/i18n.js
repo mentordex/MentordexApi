@@ -6,7 +6,11 @@ exports.messages = {
         "ACCOUNT-NOT-REGISTERD": "Account does not registered in our system.",
         "PASSWORD-RESET-TOKEN": "Token is not valid or expired. Please try with valid link.",
         "PASSWORD-MISMATCH": "Password does not match",
+        "PASSWORD-INVALID": "Invalid Password",
+        "VERIFY-EMAIL": "Please verify your email by clicking on link which is just sent to your registered email address.",
+        "VERIFY-PHONE": "Please verify your phone by entering the OTP which is just sent to your registered phone number.",
         "EMAIL-EXIST": "Email address already registered.",
+        "EMAIL-NOT-EXIST": "Invalid Email Address.",
         "SYSTEM-ERROR": "Sorry!! We could not save your information due to some internal system error. Please try in few minutes.",
         "EMAIL-SENT": "Your password recovery email was sent.",
         "USER-ID-REQUIRED": "User id is not attached with request.",
@@ -42,13 +46,13 @@ exports.messages = {
         //Required
         "CATEGORY-ID-REQUIRED": "'Category' is required.",
         "CATEGORY-ID-SHOULD-NOT-EMPTY": "'Category' can not be empty.",
-        "COUNTRY-ID-SHOULD-NOT-EMPTY":"'Country' can not be empty",
-        "CITY-ID-SHOULD-NOT-EMPTY":"'City' can not be empty",
-        "IMAGE-REQUIRED":"Image is required and can not be empty",
-        "COUNTRY-ID-REQUIRED":"Country is requuired",
-        "STATE-ID-REQUIRED":"State is requuired",
-        "STATUS-ID-REQUIRED":"Status is requuired",
-        
+        "COUNTRY-ID-SHOULD-NOT-EMPTY": "'Country' can not be empty",
+        "CITY-ID-SHOULD-NOT-EMPTY": "'City' can not be empty",
+        "IMAGE-REQUIRED": "Image is required and can not be empty",
+        "COUNTRY-ID-REQUIRED": "Country is requuired",
+        "STATE-ID-REQUIRED": "State is requuired",
+        "STATUS-ID-REQUIRED": "Status is requuired",
+
         "IMAGE-REQUIRED": "Image is required and cvan not be empty"
     },
     es: {

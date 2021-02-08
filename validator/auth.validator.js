@@ -42,6 +42,15 @@ exports.validator = functionName => {
                 ]
             }
 
+        case 'checkEmailExists':
+            {
+                return [
+                    check('email')
+                    .exists().withMessage('emailRequiredField')
+                    .isEmail().withMessage('emailIsEmail'),
+                ]
+            }
+
         case 'forgotPassword':
             {
                 return [
