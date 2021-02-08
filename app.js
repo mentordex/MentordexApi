@@ -54,6 +54,6 @@ require("./routes/office.routes")(app)
 require("./routes/team.routes")(app)
 require("./routes/faqcategory.routes")(app)
 //Interceptors
-app.use(error);//Error Handler
+//app.use(error);//Error Handler
 
 module.exports = app;

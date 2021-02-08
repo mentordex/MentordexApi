@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var sha1 = require('sha1');
 var md5 = require('md5');
 var config = require('config');
+var Schema = mongoose.Schema
 
 var userSchema = new mongoose.Schema({
     first_name: { type: String, trim: true },
@@ -53,17 +54,60 @@ var userSchema = new mongoose.Schema({
     vimeo: {
         type: String,
     },
-    country_id: {
-        type: Number,
+    country_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Country',
     },
-    state_id: {
-        type: Number,
+    state_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'State',
     },
-    city_id: {
-        type: Number,
+    city_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'City',
     },
-    zipcode: {
-        type: String,
+    zipcode: { 
+        type: String
+    },
+    lstate_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Country',
+    },
+    lstate_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'State',
+    },
+    lcity_id: { 
+        type: Schema.Types.ObjectId,
+        ref: 'City',
+    },
+    lzipcode: { 
+        type: String
+    },
+    category_id1: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
+    category_id2: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
+    category_id3: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
+    subcategory_id1: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Subcategory',
+    },
+    subcategory_id2: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Subcategory',
+    },
+    subcategory_id3: { 
+        type: Schema.Types.ObjectId,
+        ref: 'Subcategory',
+        default: null
     },
     role: {
         type: String,
@@ -105,7 +149,7 @@ var userSchema = new mongoose.Schema({
     }
 
 
-});
+},{validateBeforeSave:false});
 
 //pre save hook on mongodb
 userSchema.pre('save', async function save(next) {
