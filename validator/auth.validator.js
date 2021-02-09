@@ -79,8 +79,8 @@ exports.validator = functionName => {
         case 'updatePassword':
             {
                 return [
-                    check('token')
-                    .exists().withMessage('TOKEN-ID-REQUIRED'),
+                    check('id')
+                    .exists().withMessage('USER-ID-REQUIRED'),
 
                     check('password')
                     .exists().withMessage('passwordRequiredField')
@@ -103,6 +103,29 @@ exports.validator = functionName => {
                 ]
             }
         case 'resendMentorPhoneVerification':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'onCompleteMentorApplication':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'updateBasicDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'updateSkillsDetails':
             {
                 return [
                     check('userID')

@@ -28,8 +28,8 @@ exports.emailExist = async(req, res) => {
 
     //checking unique email
     let existingUser = await User.findOne({ email: email }, { _id: 1 });
-    console.log('existingUser', existingUser)
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+    //console.log('existingUser', existingUser)
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-NOT-EXIST'));
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
@@ -57,59 +57,82 @@ exports.login = async(req, res) => {
     if (!isValidPassword) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('PASSWORD-INVALID'));
 
 
-    // If Email Address not verified for mentor
-    if ((user['is_email_verified'] == 'NOT-VERIFIED') && (user['role'] == 'MENTOR')) {
-
-        const email_token = await userObject.generateToken(user.salt_key); //generate token
-        const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
-
-        await User.findOneAndUpdate({ _id: user._id }, { $set: { email_token: email_token } }, { new: true })
-
-        const msg = {
-            to: user.email,
-            from: config.get('sendgrid.from'),
-            templateId: templates['mentor_verify_email'],
-            dynamic_template_data: {
-                name: user.first_name + ' ' + user.last_name,
-                verify_link: verify_link,
-                email: user.email
-            }
-        };
-        sgMail.send(msg, (error, result) => {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log("That's wassup!");
-            }
-        });
-
-        return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFY-EMAIL'));
-
-    }
-    // If Email Address not verified for mentor
-
-    // If Phone not verified for mentor
-    if ((user['is_phone_verified'] == 'NOT-VERIFIED') && (user['role'] == 'MENTOR')) {
-        const phone_token = '0000';
-
-        await User.findOneAndUpdate({ _id: user._id }, { $set: { phone_token: phone_token } }, { new: true })
-
-        return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('VERIFY-PHONE'), verify_phone: true });
-
-        //return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFY-PHONE'));
-    }
-    // If Phone not verified for mentor
-
-    if (user['is_active'] == 'IN-ACTIVE') return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USER-NOT-ACTIVE'));
-
     const token = await userObject.generateToken(user.salt_key); //generate token
 
-    await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+    if ((user['role'] == 'MENTOR')) {
+        // If Email Address not verified for mentor
+        if (user['is_email_verified'] == 'NOT-VERIFIED') {
 
-    res.setHeader('x-mentordex-auth-token', token);
-    res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+            const email_token = await userObject.generateToken(user.salt_key); //generate token
+            const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'name', 'email', 'role']));
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { email_token: email_token } }, { new: true })
+
+            const msg = {
+                to: user.email,
+                from: config.get('sendgrid.from'),
+                templateId: templates['mentor_verify_email'],
+                dynamic_template_data: {
+                    name: user.first_name + ' ' + user.last_name,
+                    verify_link: verify_link,
+                    email: user.email
+                }
+            };
+            sgMail.send(msg, (error, result) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("That's wassup!");
+                }
+            });
+
+            return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFY-EMAIL'));
+
+        }
+        // If Email Address not verified for mentor
+
+        // If Phone not verified for mentor
+        else if (user['is_phone_verified'] == 'NOT-VERIFIED') {
+            const phone_token = '0000';
+
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { phone_token: phone_token } }, { new: true })
+
+            return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('VERIFY-PHONE'), verify_phone: false });
+
+            //return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFY-PHONE'));
+        }
+        // If Phone not verified for mentor
+        else {
+
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+
+            res.setHeader('x-mentordex-auth-token', token);
+            res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+            if (user['is_active'] == 'IN-ACTIVE') {
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role });
+
+            } else {
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+            }
+        }
+
+
+    } else {
+        // IF ROLE = PARENT
+
+        if (user['is_active'] == 'IN-ACTIVE') return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USER-NOT-ACTIVE'));
+
+        await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+
+        res.setHeader('x-mentordex-auth-token', token);
+        res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+
+    }
 
 }
 
@@ -121,16 +144,18 @@ exports.updateParentInfo = async(req, res) => {
     //checking unique email
     let existingUser = await User.findOne({ _id: user_id });
 
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
     var userInfo = {}
     userInfo['modified_at'] = new Date()
-    if ('lstate_id' in req.body && (req.body.lstate_id).length > 0) {
-        userInfo['lstate_id'] = req.body.lstate_id
+    if ('state_id' in req.body && (req.body.state_id).length > 0) {
+        userInfo['state_id'] = req.body.state_id
     }
-    if ('lcity_id' in req.body && (req.body.lcity_id).length > 0) {
-        userInfo['lcity_id'] = req.body.lcity_id
+    if ('city_id' in req.body && (req.body.city_id).length > 0) {
+        userInfo['city_id'] = req.body.city_id
     }
-    if ('lzipcode' in req.body && (req.body.lzipcode).length > 0) {
-        userInfo['lzipcode'] = req.body.lzipcode
+    if ('zipcode' in req.body && (req.body.zipcode).length > 0) {
+        userInfo['zipcode'] = req.body.zipcode
     }
     if ('category_id1' in req.body && (req.body.category_id1).length > 0) {
         userInfo['category_id1'] = req.body.category_id1
@@ -150,7 +175,7 @@ exports.updateParentInfo = async(req, res) => {
     if ('subcategory_id3' in req.body && (req.body.subcategory_id3).length > 0) {
         userInfo['subcategory_id3'] = req.body.subcategory_id3
     }
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
 
     await User.findOneAndUpdate({ _id: user_id }, { $set: userInfo }, { new: true })
     return res.status(responseCode.CODES.SUCCESS.OK).send(true);
@@ -235,43 +260,52 @@ exports.signup = async(req, res) => {
             console.log(err);
             return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         }
-        const token = await userObject.generateToken(user.salt_key); //generate token
-        const email_token = await userObject.generateToken(user.salt_key); //generate token
-        const phone_token = '0000';
 
-        const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
-            //console.log('token',token);
+        const token = await userObject.generateToken(user.salt_key); //generate AUTH token
 
-        await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
+        if (user.role == 'MENTOR') {
 
-        const msg = {
-            to: user.email,
-            from: config.get('sendgrid.from'),
-            templateId: templates['mentor_signup'],
-            dynamic_template_data: {
-                name: user.first_name + ' ' + user.last_name,
-                verify_link: verify_link,
-                email: user.email
-            }
-        };
-        sgMail.send(msg, (error, result) => {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log("That's wassup!");
-            }
-        });
+            const email_token = await userObject.generateToken(user.salt_key); //generate token
+            const phone_token = '0000';
 
-        res.setHeader('x-mentordex-auth-token', token);
-        res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+            const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
+                //console.log('token',token);
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
 
-        //return res.status(200).send(userInfo);
+            const msg = {
+                to: user.email,
+                from: config.get('sendgrid.from'),
+                templateId: templates['mentor_signup'],
+                dynamic_template_data: {
+                    name: user.first_name + ' ' + user.last_name,
+                    verify_link: verify_link,
+                    email: user.email
+                }
+            };
+            sgMail.send(msg, (error, result) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("That's wassup!");
+                }
+            });
+
+            return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+
+
+        } else {
+            // IF Role = PARENT
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE' } }, { new: true })
+
+            res.setHeader('x-mentordex-auth-token', token);
+            res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+            //return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+            return res.status(responseCode.CODES.SUCCESS.OK).send(user);
+        }
 
     });
-
-
 
 }
 
@@ -324,7 +358,9 @@ exports.verifyToken = async(req, res) => {
     //checking unique email
     let existingUser = await User.findOne({ reset_password_token: token }, { _id: 1 });
 
-    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('PASSWORD-RESET-TOKEN'));
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFICATION-FAILED'));
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { reset_password_token: '' } }, { new: true })
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 
@@ -334,10 +370,10 @@ exports.updatePassword = async(req, res) => {
 
     //console.log('req', req.body);
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { token, password } = req.body
+    const { id, password } = req.body
 
     //checking unique email
-    let existingUser = await User.findOne({ reset_password_token: token }, { _id: 1, email: 1, salt_key: 1, created_at: 1 });
+    let existingUser = await User.findOne({ _id: id }, { _id: 1, email: 1, salt_key: 1, created_at: 1 });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
@@ -694,6 +730,80 @@ exports.resendMentorEmailVerification = async(req, res) => {
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
 }
 
+exports.onCompleteMentorApplication = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    const token = await userObject.generateToken(existingUser.salt_key); //generate token
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { auth_token: token } }, { new: true })
+
+    res.setHeader('x-mentordex-auth-token', token);
+    res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: existingUser._id, first_name: existingUser.first_name, last_name: existingUser.last_name, email: existingUser.email, role: existingUser.role });
+}
+
+exports.updateBasicDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, gender, primary_language, dob, address1, address2, country_id, state_id, city_id, zipcode, social_links } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.gender = gender;
+    existingUser.primary_language = primary_language;
+    existingUser.dob = dob;
+    existingUser.address1 = address1
+    existingUser.address2 = address2
+    existingUser.country_id = country_id
+    existingUser.state_id = state_id
+    existingUser.city_id = city_id
+    existingUser.zipcode = zipcode
+    existingUser.social_links = social_links
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
+exports.updateSkillsDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, category_id, subcategories } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.category_id = category_id;
+    existingUser.subcategories = subcategories;
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
 
 async function sendEmail(to, subject, message) {
     const transporter = await nodemailer.createTransport({

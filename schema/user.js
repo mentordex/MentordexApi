@@ -54,60 +54,98 @@ var userSchema = new mongoose.Schema({
     vimeo: {
         type: String,
     },
-    country_id: { 
+    social_links: {
+        instagram_url: {
+            type: String,
+        },
+        linkedin_url: {
+            type: String,
+        },
+        twitter_url: {
+            type: String,
+        }
+    },
+    dob: {
+        year: {
+            type: String,
+        },
+        month: {
+            type: String,
+        },
+        day: {
+            type: String,
+        }
+    },
+    gender: {
+        type: String,
+        enum: ['MALE', 'FEMALE'],
+        default: 'MALE'
+    },
+    subcategories: [],
+    category_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
+    primary_language: [],
+    address1: {
+        type: String,
+    },
+    address2: {
+        type: String,
+    },
+    country_id: {
         type: Schema.Types.ObjectId,
         ref: 'Country',
     },
-    state_id: { 
+    state_id: {
         type: Schema.Types.ObjectId,
         ref: 'State',
     },
-    city_id: { 
+    city_id: {
         type: Schema.Types.ObjectId,
         ref: 'City',
     },
-    zipcode: { 
+    zipcode: {
         type: String
     },
-    lstate_id: { 
+    lcountry_id: {
         type: Schema.Types.ObjectId,
         ref: 'Country',
     },
-    lstate_id: { 
+    lstate_id: {
         type: Schema.Types.ObjectId,
         ref: 'State',
     },
-    lcity_id: { 
+    lcity_id: {
         type: Schema.Types.ObjectId,
         ref: 'City',
     },
-    lzipcode: { 
+    lzipcode: {
         type: String
     },
-    category_id1: { 
+    category_id1: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
     },
-    category_id2: { 
+    category_id2: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
     },
-    category_id3: { 
+    category_id3: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
     },
-    subcategory_id1: { 
+    subcategory_id1: {
         type: Schema.Types.ObjectId,
         ref: 'Subcategory',
     },
-    subcategory_id2: { 
+    subcategory_id2: {
         type: Schema.Types.ObjectId,
         ref: 'Subcategory',
     },
-    subcategory_id3: { 
+    subcategory_id3: {
         type: Schema.Types.ObjectId,
-        ref: 'Subcategory',
-        default: null
+        ref: 'Subcategory'
     },
     role: {
         type: String,
@@ -149,7 +187,7 @@ var userSchema = new mongoose.Schema({
     }
 
 
-},{validateBeforeSave:false});
+}, { validateBeforeSave: false });
 
 //pre save hook on mongodb
 userSchema.pre('save', async function save(next) {
@@ -167,12 +205,12 @@ userSchema.pre('save', async function save(next) {
 });
 
 userSchema.methods.passwordCompare = async function(saltKey, savedPassword, requestedPassword) {
-console.log('saltKey',saltKey)
+    console.log('saltKey', saltKey)
 
     const password = await md5(`${requestedPassword}`)
     const encryptedPassword = await md5(`${password}${saltKey}`)
-    console.log('encryptedPassword',encryptedPassword)
-    console.log('savedPassword',savedPassword)
+    console.log('encryptedPassword', encryptedPassword)
+    console.log('savedPassword', savedPassword)
     return (encryptedPassword == savedPassword) ? true : false
 }
 
@@ -193,7 +231,7 @@ userSchema.methods.encryptPassword = async function(userData, password) {
     const salt = await sha1(`${userData.email}${userData.created_at}`)
     const MD5Password = await md5(`${password}`)
     const encryptedPassword = await md5(`${MD5Password}${salt}`)
-    return {encryptedPassword,salt };
+    return { encryptedPassword, salt };
 }
 
 module.exports.User = mongoose.model('User', userSchema);

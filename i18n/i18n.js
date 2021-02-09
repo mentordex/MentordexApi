@@ -4,7 +4,8 @@ exports.messages = {
     en: {
         // Error messages
         "ACCOUNT-NOT-REGISTERD": "Account does not registered in our system.",
-        "PASSWORD-RESET-TOKEN": "Token is not valid or expired. Please try with valid link.",
+        "PASSWORD-RESET-TOKEN": "Token is not valid or expired. Please try again with valid link.",
+        "VERIFICATION-FAILED": "Failed to verify your account. Please try again.",
         "PASSWORD-MISMATCH": "Password does not match",
         "PASSWORD-INVALID": "Invalid Password",
         "VERIFY-EMAIL": "Please verify your email by clicking on link which is just sent to your registered email address.",
