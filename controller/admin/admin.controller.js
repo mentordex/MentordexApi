@@ -189,7 +189,7 @@ exports.countryListing = async (req, res) => {
     let totalRecords = await Country.count(condition);   
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
-    console.log('totalPages', totalPages);
+    
     let start = pageNumber * size;
 
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
@@ -246,7 +246,8 @@ exports.stateListing = async (req, res) => {
                 'title':1, 
                 'is_active':1, 
                 'country_id':1,     
-                'created_at':1,              
+                'created_at':1,
+                'modified_at':1,              
                 'country.title':1,           
                                                         
             },
@@ -329,7 +330,8 @@ exports.cityListing = async (req, res) => {
                 'zipcodes':1, 
                 'image':1,
                 'state_id':1, 
-                'country_id':1,     
+                'country_id':1, 
+                'modified_at':1,     
                 'created_at':1,              
                 'country.title':1, 
                 'state.title':1,           
