@@ -59,7 +59,7 @@ exports.login = async(req, res) => {
 
     const token = await userObject.generateToken(user.salt_key); //generate token
 
-    console.log(user)
+    //console.log(user)
 
     if (user.role == 'MENTOR') {
         // If Email Address not verified for mentor
