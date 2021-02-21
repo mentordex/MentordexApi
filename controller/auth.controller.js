@@ -13,6 +13,9 @@ var mongoose = require('mongoose');
 const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(config.get('sendgrid.key'));
 
+const upload = require("../utilities/upload");
+const singleUpload = upload.single("file");
+
 templates = {
     mentor_signup: "d-a17aa33d0e4045aea26bd661787db861",
     mentor_verify_email: "d-7740a854506f4289926f78de2ced3951",
@@ -850,6 +853,23 @@ exports.updateSkillsDetails = async(req, res) => {
         return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
     });
 
+}
+
+
+exports.uploadImage = async(req, res) => {
+
+    singleUpload(req, res, function(err) {
+        if (err) {
+            console.log('err', err)
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err);
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send({
+            fileLocation: req.file.location,
+            fileKey: req.file.key,
+            fileName: req.file.originalname,
+            fileMimeType: req.file.mimetype
+        });
+    });
 }
 
 async function sendEmail(to, subject, message) {

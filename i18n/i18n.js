@@ -11,7 +11,7 @@ exports.messages = {
         "VERIFY-EMAIL": "Please verify your email by clicking on link which is just sent to your registered email address.",
         "VERIFY-PHONE": "Please verify your phone by entering the OTP which is just sent to your registered phone number.",
         "EMAIL-EXIST": "The email ID is already registered. Please try to login.",
-        "EMAIL-NOT-EXIST": "Invalid Email Address.",
+        "EMAIL-NOT-EXIST": "The email doesn’t match our record. Please use a valid email ID.",
         "SYSTEM-ERROR": "Sorry!! We could not save your information due to some internal system error. Please try in few minutes.",
         "EMAIL-SENT": "Your password recovery email was sent.",
         "USER-ID-REQUIRED": "User id is not attached with request.",
