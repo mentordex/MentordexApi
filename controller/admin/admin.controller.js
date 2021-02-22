@@ -14,6 +14,7 @@ const { Property } = require('../../schema/property');
 const { Amenity } = require('../../schema/amenity');
 const { Activity } = require('../../schema/activity');
 const { Pageview } = require('../../schema/pageview');
+const { DayTimeslot } = require('../../schema/day_timeslot');
 const responseCode = require('../../utilities/responseCode');
 var mongoose = require('mongoose');
 const adminObject = new Admin();
@@ -173,6 +174,49 @@ exports.userListing = async(req, res) => {
      }
 
      return res.status(responseCode.CODES.SUCCESS.OK).send(data);*/
+
+}
+
+exports.mentorListing = async(req, res) => {
+
+
+
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = -1
+    condition['role'] = 'MENTOR';
+    
+    if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
+        condition['title'] = { $regex: req.body['search'], $options: 'i' }
+        condition['email'] = { $regex: req.body['search'], $options: 'i' }
+    }
+    if (_.has(req.body, ['admin_status']) && (req.body['admin_status']).length > 0) {
+        condition['admin_status'] = req.body['admin_status'];
+    }else{
+        condition['admin_status'] = 'NEW'
+    }
+
+
+    let totalRecords = await User.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+
+   
+console.log('condition',condition)
+    let users = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
+     let data = {
+         records:users,
+         total_records:totalRecords
+     }
+
+     return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 
 }
 
@@ -1060,38 +1104,34 @@ exports.updateProfile = async(req, res) => {
 
 }
 
+exports.dayTimeslotListing = async(req, res) => {
 
-/*exports.deleteProperty = async(req, res) => {
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = -1
 
-    let property = await Property.findOne({ "_id": req.body.propertyID}, { _id: 1 });
-
-    if (!property) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('NO-RECORD-FOUND'));
+   
 
 
-    let propertyViewCount = await Pageview.findOne(
-        {property_id: req.body.propertyID},
-        { _id: 1 }
-    );
+    let totalRecords = await DayTimeslot.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
 
-    
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
 
-    if (propertyViewCount ) return res.status(responseCode.CODES.SUCCESS.OK).send(false);
 
-    if (!propertyViewCount){
-        //remove Property
-        Property.deleteOne({ _id: req.body.propertyID }, function (err, result) {
-            if (err) return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err.messege)
-
-            Activity.create({
-                property_id:req.body.propertyID,
-                action:'property added by admin',           
-            });
-
-            return res.status(responseCode.CODES.SUCCESS.OK).send(true);   
-        });
+    let records = await DayTimeslot.find(condition).skip(skip).limit(limit).sort(sortBy);
+    let data = {
+        records: records,
+        total_records: totalRecords
     }
-    
-}*/
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+}
 
 
 async function sendEmail(to, subject, message) {

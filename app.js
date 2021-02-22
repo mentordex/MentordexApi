@@ -53,6 +53,7 @@ require("./routes/admin/admin.routes")(app)
 require("./routes/office.routes")(app)
 require("./routes/team.routes")(app)
 require("./routes/faqcategory.routes")(app)
+require("./routes/day_timeslot.routes")(app)
 //Interceptors
 //app.use(error);//Error Handler
 

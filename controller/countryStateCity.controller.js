@@ -258,6 +258,63 @@ exports.deleteCountry = async (req, res) => {
     }  
    
 }
+exports.changeStateStatus = async (req, res) => {
+    let existingRecord = await State.findOne(
+        {_id:mongoose.Types.ObjectId(req.body.id)},
+        { _id: 1 }
+    );
+    
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
+    
+    req.body['modified_at'] = new Date()
+    //save city 
+    State.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: {is_active:req.body.is_active} }, { new: true }, function (err, data) {
+        
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));        
+            
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);        
+        
+    });
+}
+exports.changeCityStatus = async (req, res) => {
+    let existingRecord = await City.findOne(
+        {_id:mongoose.Types.ObjectId(req.body.id)},
+        { _id: 1 }
+    );
+    
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
+    
+    req.body['modified_at'] = new Date()
+    //save city 
+    City.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: {is_active:req.body.is_active} }, { new: true }, function (err, data) {
+        
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));        
+            
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);        
+        
+    });
+}
+
+exports.changeCountryStatus = async (req, res) => {
+    let existingRecord = await Country.findOne(
+        {_id:mongoose.Types.ObjectId(req.body.id)},
+        { _id: 1 }
+    );
+    
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));     
+    
+    req.body['modified_at'] = new Date()
+    //save city 
+    Country.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: {is_active:req.body.is_active} }, { new: true }, function (err, data) {
+        
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));        
+            
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);        
+        
+    });
+}
+
+
 
 
 

@@ -184,7 +184,12 @@ var userSchema = new mongoose.Schema({
     modified_at: {
         type: Date,
         default: new Date()
-    }
+    },
+    admin_status: {
+        type: String,
+        enum: ['NEW', 'APPROVED','RESCHEDULED'],
+        default: 'NEW'
+    },
 
 
 }, { validateBeforeSave: false });
