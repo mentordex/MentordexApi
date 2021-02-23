@@ -147,6 +147,7 @@ exports.stateListing = async(req, res) => {
     });
 
 }
+
 exports.cityListing = async(req, res) => {
     const condition = {}
     if ('state_id' in req.body) {
@@ -291,4 +292,70 @@ exports.changeCountryStatus = async(req, res) => {
         return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 
     });
+}
+
+exports.getActiveCities = async(req, res) => {
+    const condition = {};
+    condition['is_active'] = true;
+
+    let limit = parseInt(7);
+    let skip = parseInt(0);
+
+    City.aggregate([{
+            $match: condition
+        },
+        {
+
+            "$lookup": {
+                from: "countries",
+                localField: "country_id",
+                foreignField: "_id",
+                as: "country"
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "states",
+                localField: "state_id",
+                foreignField: "_id",
+                as: "state"
+            }
+        },
+        {
+            $project: {
+                'title': 1,
+                'is_active': 1,
+                'zipcodes': 1,
+                'image': 1,
+                'state_id': 1,
+                'country_id': 1,
+                'modified_at': 1,
+                'created_at': 1,
+                'country.title': 1,
+                'state.title': 1,
+
+            },
+        },
+        {
+
+            $skip: skip
+        },
+        {
+            $limit: limit
+        }
+
+    ], function(err, records) {
+
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(records);
+    })
+
+    /*
+    City.find(condition, function(err, result) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(result);
+    }) */
+
 }

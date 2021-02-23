@@ -133,6 +133,14 @@ exports.validator = functionName => {
                 ]
             }
 
+        case 'updateBookASlotDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
         case 'submitMentorPhoneVerification':
             {
                 return [
