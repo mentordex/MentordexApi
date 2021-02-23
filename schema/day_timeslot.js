@@ -4,27 +4,25 @@ var config = require('config');
 var Schema = mongoose.Schema
 
 var dayTimeslotSchema = new mongoose.Schema({
-    day: { 
-        type: String, 
-        trim:true 
-    },   
-    slots: [
-        {  
-            slot: { 
-                type: String, 
-                trim:true 
-            },
-            isChecked: {
-                type: Boolean,
-                enum : [true, false],
-                default: true       
-            }
+    day: {
+        type: String,
+        trim: true
+    },
+    slots: [{
+        slot: {
+            type: String,
+            trim: true
+        },
+        isChecked: {
+            type: Boolean,
+            enum: [true, false],
+            default: true
         }
-    ],  
+    }],
     is_active: {
         type: Boolean,
-        enum : [true, false],
-        default: true       
+        enum: [true, false],
+        default: true
     },
     created_at: {
         type: Date,
@@ -32,11 +30,11 @@ var dayTimeslotSchema = new mongoose.Schema({
     },
     modified_at: {
         type: Date,
-        default: new Date()      
-    }         
+        default: new Date()
+    }
 
 });
 
 
 
-module.exports.DayTimeslot =  mongoose.model('DayTimeslot', dayTimeslotSchema);
+module.exports.DayTimeslot = mongoose.model('DayTimeslot', dayTimeslotSchema);

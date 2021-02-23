@@ -66,7 +66,6 @@ exports.changeDayStatus = async(req, res) => {
     });
 }
 
-
 exports.getAvailableSlots = async(req, res) => {
 
     let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1, });
