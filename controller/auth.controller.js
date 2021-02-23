@@ -856,12 +856,13 @@ exports.updateSkillsDetails = async(req, res) => {
 }
 
 
-exports.uploadImage = async(req, res) => {
+
+exports.uploadPdf = async(req, res) => {
 
     singleUpload(req, res, function(err) {
         if (err) {
-            console.log('err', err)
-            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err);
+            //console.log('err', err)
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err.message);
         }
         return res.status(responseCode.CODES.SUCCESS.OK).send({
             fileLocation: req.file.location,

@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser())
 app.use(cors())
 
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -38,11 +38,11 @@ app.use(createLocaleMiddleware({
 app.use(startPolyglot)
 
 // Root URL
-app.get('/',function(req,res){
-    res.send('All Set');
-}) 
-// Routes
-// =============================================================
+app.get('/', function(req, res) {
+        res.send('All Set');
+    })
+    // Routes
+    // =============================================================
 require("./routes/auth.routes")(app)
 require("./routes/countryStateCity.routes")(app)
 require("./routes/categorySubcategory.routes")(app)
@@ -53,7 +53,8 @@ require("./routes/admin/admin.routes")(app)
 require("./routes/office.routes")(app)
 require("./routes/team.routes")(app)
 require("./routes/faqcategory.routes")(app)
-//Interceptors
-//app.use(error);//Error Handler
+require("./routes/day_timeslot.routes")(app)
+    //Interceptors
+    //app.use(error);//Error Handler
 
 module.exports = app;
