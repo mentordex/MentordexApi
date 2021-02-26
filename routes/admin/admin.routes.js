@@ -1,6 +1,6 @@
 const { procErr } = require('../../utilities/processErrors')
 const { validator } = require('../../validator/auth.validator')
-const { login, adminListing, userListing, cityListing, stateListing,countryListing, propertyTypeListing, propertyListing, amenityListing, changeUserStatus, deleteUser, adminData, verifyToken, forgotPassword, updatePassword, changePassword, changeAdminStatus, deleteAdmin, addUpdateAdmin, changePropertyStatus, dashboard, adminProfile, updateProfile, categoryListing, subcategoryListing, faqcategoryListing, mentorListing, dayTimeslotListing   } = require('../../controller/admin/admin.controller')
+const { login, adminListing, userListing, cityListing, stateListing,countryListing, propertyTypeListing, propertyListing, amenityListing, changeUserStatus, deleteUser, adminData, verifyToken, forgotPassword, updatePassword, changePassword, changeAdminStatus, deleteAdmin, addUpdateAdmin, changePropertyStatus, dashboard, adminProfile, updateProfile, categoryListing, subcategoryListing, faqcategoryListing, mentorListing, dayTimeslotListing, bannerListing   } = require('../../controller/admin/admin.controller')
 const tokenValidator = require('../../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -66,6 +66,9 @@ module.exports = router => {
     
     router.post("/api/admin/updateProfile",  procErr, updateProfile)
     router.post("/api/admin/dayTimeslotListing",  procErr, dayTimeslotListing)
+    router.post("/api/admin/bannerListing", procErr, bannerListing)
+
+    
     
     
 }

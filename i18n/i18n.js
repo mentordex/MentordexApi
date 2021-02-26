@@ -20,6 +20,7 @@ exports.messages = {
         "CITY-ID-REQUIRED": "'city' is required.",
         "CITY-ID-SHOULD-NOT-EMPTY": "'city' can not be empty.",
         "CITY-ALREADY-EXIST": "Entered city is already exist.",
+        "DAY-ALREADY-EXIST": "Slot already exist in our records.",
         "CATEGORY-ALREADY-EXIST": "Entered category is already exist.",
         "OTP-INVALID": "Invalid OTP.",
         "EMAIL-VERIFY-FAILED": "Failed to verify your email.",

@@ -15,11 +15,47 @@ const { Amenity } = require('../../schema/amenity');
 const { Activity } = require('../../schema/activity');
 const { Pageview } = require('../../schema/pageview');
 const { DayTimeslot } = require('../../schema/day_timeslot');
+const { Banner } = require('../../schema/banner');
 const responseCode = require('../../utilities/responseCode');
 var mongoose = require('mongoose');
 const adminObject = new Admin();
 //sgMail.setApiKey(config.get('sendgrid.key'));
 const nodemailer = require("nodemailer");
+
+
+exports.bannerListing = async(req, res) => {
+
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = -1
+
+    if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
+        condition['type'] = { $regex: req.body['search'], $options: 'i' }
+    }
+
+
+    let totalRecords = await Banner.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+
+    let records = await Banner.find(condition).skip(skip).limit(limit).sort(sortBy);
+    let data = {
+        records: records,
+        total_records: totalRecords
+    }
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+
+
+}
 
 /*
  * Here we would probably call the DB to confirm the user exists

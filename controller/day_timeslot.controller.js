@@ -58,6 +58,14 @@ exports.addDayTimeslot = async (req, res) => {
     
 }
 
+exports.fetchSlot = async (req, res) => {
+    let existingRecord = await DayTimeslot.findOne(
+        {_id:mongoose.Types.ObjectId(req.body.id)},
+        { _id: 1 }
+    );
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord);     
+}
+
 
 exports.changeDayStatus = async (req, res) => {
     let existingRecord = await DayTimeslot.findOne(
