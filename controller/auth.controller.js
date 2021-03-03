@@ -13,6 +13,9 @@ var mongoose = require('mongoose');
 const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(config.get('sendgrid.key'));
 
+const upload = require("../utilities/upload");
+const singleUpload = upload.single("file");
+
 templates = {
     mentor_signup: "d-a17aa33d0e4045aea26bd661787db861",
     mentor_verify_email: "d-7740a854506f4289926f78de2ced3951",
@@ -47,7 +50,7 @@ exports.login = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email, password } = req.body
 
-    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1 });
+    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1 });
 
     if (!user) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-NOT-EXIST'));
 
@@ -59,7 +62,7 @@ exports.login = async(req, res) => {
 
     const token = await userObject.generateToken(user.salt_key); //generate token
 
-    console.log(user)
+    //console.log(user)
 
     if (user.role == 'MENTOR') {
         // If Email Address not verified for mentor
@@ -113,11 +116,11 @@ exports.login = async(req, res) => {
 
             if (user['is_active'] == 'IN-ACTIVE') {
 
-                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role });
+                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role, admin_status: user.admin_status });
 
             } else {
 
-                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role', 'admin_status']));
             }
         }
 
@@ -252,7 +255,7 @@ exports.signup = async(req, res) => {
 
 
     //save user 
-    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'created_at', 'modified_at','admin_status']));
+    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'created_at', 'modified_at', 'admin_status']));
 
 
 
@@ -852,6 +855,65 @@ exports.updateSkillsDetails = async(req, res) => {
 
 }
 
+
+exports.updateBookASlotDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, appointment_date, appointment_time, references, letter_of_recommendation } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.appointment_date = appointment_date;
+    existingUser.appointment_time = appointment_time;
+    existingUser.references = references;
+    existingUser.letter_of_recommendation = letter_of_recommendation;
+    existingUser.admin_status = 'NEW';
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
+
+exports.uploadPdf = async(req, res) => {
+
+    singleUpload(req, res, function(err) {
+        if (err) {
+            //console.log('err', err)
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err.message);
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send({
+            fileLocation: req.file.location,
+            fileKey: req.file.key,
+            fileName: req.file.originalname,
+            fileMimeType: req.file.mimetype
+        });
+    });
+}
+exports.testMail = async(req, res) => {
+    const {email} = req.body
+    const msg = {
+        to: 'eeshansharma@hotmail.com',
+        cc:'sandeep.may86@gmail.com',
+        from: config.get('sendgrid.from'),
+        subject: 'New Subscriber',
+        text: 'You have a new subscriber request.',
+        html: `Hi,<br/> You have received a new contact request from ${email}`,
+    };
+    sgMail.send(msg, (error, result) => {
+        return res.status(responseCode.CODES.SUCCESS.OK).send({send:true})
+    });
+    
+}
 async function sendEmail(to, subject, message) {
     const transporter = await nodemailer.createTransport({
         host: config.get('nodemailer.host'),

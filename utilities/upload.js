@@ -2,6 +2,8 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const aws = require('aws-sdk');
 const config = require('config');
+var hummus = require('hummus');
+var isBase64 = require('is-base64');
 
 //console.log(config.get('aws.accessKey')+':'+config.get('aws.secretKey')+':'+config.get('aws.region')+':'+config.get('aws.bucket'))
 aws.config.update({
@@ -19,25 +21,47 @@ aws.config.update({
 const s3 = new aws.S3();
 
 const fileFilter = (req, file, cb) => {
-  cb(null, true);
-  /*if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type, only JPG, JPEG , PNG and PDF is allowed!'), false);
-  }*/
+    //console.log('req.body', req.body);
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+        cb(null, true);
+    } else if (file.mimetype === 'application/pdf') {
+        let pdfBase64String = req.body.base64StringFile;
+        if (isBase64(pdfBase64String)) {
+            let bufferPdf;
+            try {
+                bufferPdf = Buffer.from(pdfBase64String, 'base64');
+                const pdfReader = hummus.createReader(new hummus.PDFRStreamForBuffer(bufferPdf));
+                var pages = pdfReader.getPagesCount();
+                if (pages > 0) {
+                    //console.log("Seems to be a valid PDF!");
+                    cb(null, true);
+                } else {
+                    //console.log("Unexpected outcome for number o pages: '" + pages + "'");
+                    cb(new Error('The file is corrupted. Kindly choose other file.'), false);
+                }
+            } catch (err) {
+                //console.log("ERROR while handling buffer of pdfBase64 and/or trying to parse PDF: " + err);
+                cb(new Error('The file is corrupted. Kindly choose other file.'), false);
+            }
+        } else {
+            cb(new Error('The file is corrupted. Kindly choose other file.'), false);
+        }
+    } else {
+        cb(new Error('Invalid file type, only JPG, JPEG ,PNG and PDF is allowed!'), false);
+    }
 }
 
 const upload = multer({
-  fileFilter,
-  storage: multerS3({
-    acl: 'public-read',
-    s3,
-    bucket: config.get('aws.bucket'), 
-    key: function (req, file, cb) {     
-      cb(null, Date.now().toString())
-    },
-    
-  })
+    fileFilter,
+    storage: multerS3({
+        acl: 'public-read',
+        s3,
+        bucket: config.get('aws.bucket'),
+        key: function(req, file, cb) {
+            const folderName = (req.body.folder) ? req.body.folder + '/' : '';
+            cb(null, folderName + Date.now().toString())
+        },
+
+    })
 });
 module.exports = upload;
-

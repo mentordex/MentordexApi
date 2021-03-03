@@ -16,6 +16,7 @@
     "express-async-errors": "^3.1.1",
     "express-locale": "^2.0.0",
     "express-validator": "^6.6.1",
+    "hummus": "^1.0.110",
     "is-base64": "^1.1.0",
     "lodash": "^4.17.20",
     "md5": "^2.3.0",

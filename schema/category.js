@@ -6,6 +6,9 @@ var config = require('config');
 var categorySchema = new mongoose.Schema({
     title: { type: String, trim:true },
     image: { type: String, trim:true },  
+    image_object:{
+        
+    },
     count: {  
         type: Number, 
         default:0

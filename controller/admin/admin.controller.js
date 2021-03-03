@@ -29,9 +29,10 @@ exports.bannerListing = async(req, res) => {
     let condition = {};
     let sortBy = {};
     sortBy['created_at'] = -1
-
+   
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
-        condition['type'] = { $regex: req.body['search'], $options: 'i' }
+        condition['title'] = { $regex: req.body['search'], $options: 'i' }
+        condition['description'] = { $regex: req.body['search'], $options: 'i' }
     }
 
 
@@ -477,6 +478,8 @@ exports.categoryListing = async (req, res) => {
                 title: 1,
                 count: 1,
                 image: 1,
+                image_object: 1,
+                is_active:1,
                 is_visible_on_home: 1,
                 created_at: 1,
                 "subcategory.title": 1
@@ -541,6 +544,8 @@ exports.subcategoryListing = async(req, res) => {
             $project: {
                 'title': 1,
                 'image': 1,
+                'is_active': 1,
+                'image_object': 1,
                 'category_id': 1,
                 'created_at': 1,
                 'category.title': 1,

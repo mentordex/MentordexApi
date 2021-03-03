@@ -8,16 +8,20 @@ const upload = require("../utilities/upload");
 const singleUpload = upload.single("file");
 
 exports.uploadImage = async (req, res) => {
-    console.log('tyes');
+    
     singleUpload(req, res, function (err) {
 		if (err) {       
-            console.log('err',err)    
+           
             return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err); 
         }		
         console.log('file',req.file.location)
 		return res.status(responseCode.CODES.SUCCESS.OK).send({
-			file:req.file.location
-		});
+			file:req.file.location,
+            fileKey: req.file.key,
+            fileName: req.file.originalname,
+            fileMimeType: req.file.mimetype
+		});        
+
 	});
 }
 
@@ -61,7 +65,7 @@ exports.addCategory = async (req, res) => {
 
         
             
-        newCategory = new Category(_.pick(req.body, ['title','image','is_visible_on_home', 'count','created_at','modified_at']));
+        newCategory = new Category(_.pick(req.body, ['title','image','image_object','is_visible_on_home', 'count','created_at','modified_at']));
        
         newCategory.save(async function (err, category) {
             
@@ -103,7 +107,7 @@ exports.addSubcategory = async (req, res) => {
         });
     }else{
         //save Subcategor 
-        newSubcategory = new Subcategory(_.pick(req.body, ['title','category_id','image', 'count','created_at','modified_at']));
+        newSubcategory = new Subcategory(_.pick(req.body, ['title','category_id','image', 'image_object','count','created_at','modified_at','is_active']));
         
         newSubcategory.save(async function (err, subcategory) {
             
@@ -181,6 +185,22 @@ exports.deleteSubcategory = async (req, res) => {
     });
      
    
+}
+
+exports.changeSubcategoryStatus = async(req, res) => {
+    let existingRecord = await Subcategory.findOne({ _id: mongoose.Types.ObjectId(req.body.id) }, { _id: 1 });
+
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+    req.body['modified_at'] = new Date()
+        //save city 
+        Subcategory.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: { is_active: req.body.is_active } }, { new: true }, function(err, data) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+    });
 }
 
 

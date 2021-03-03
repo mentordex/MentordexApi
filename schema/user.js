@@ -82,6 +82,37 @@ var userSchema = new mongoose.Schema({
         default: 'MALE'
     },
     subcategories: [],
+    appointment_date: {
+        type: String,
+    },
+    appointment_time: [],
+    references: [{
+        name: {
+            type: String,
+            trim: true
+        },
+        relation: {
+            type: String,
+            trim: true
+        },
+        job_title: {
+            type: String,
+            trim: true
+        },
+        workplace_name: {
+            type: String,
+            trim: true
+        },
+        contact_number: {
+            type: String,
+            trim: true
+        },
+        email: {
+            type: String,
+            trim: true
+        },
+    }],
+    letter_of_recommendation: [],
     category_id: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
@@ -106,21 +137,6 @@ var userSchema = new mongoose.Schema({
         ref: 'City',
     },
     zipcode: {
-        type: String
-    },
-    lcountry_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Country',
-    },
-    lstate_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'State',
-    },
-    lcity_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'City',
-    },
-    lzipcode: {
         type: String
     },
     category_id1: {
@@ -187,8 +203,8 @@ var userSchema = new mongoose.Schema({
     },
     admin_status: {
         type: String,
-        enum: ['NEW', 'APPROVED','RESCHEDULED'],
-        default: 'NEW'
+        enum: ['NEW', 'APPROVED', 'RESCHEDULED', 'IN-PROCESS', 'REJECTED', 'PENDING'],
+        default: 'PENDING'
     },
 
 

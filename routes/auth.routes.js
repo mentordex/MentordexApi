@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, uploadPdf, testMail } = require('../controller/auth.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -54,5 +54,10 @@ module.exports = router => {
     router.post("/api/onCompleteMentorApplication", [validator('onCompleteMentorApplication')], procErr, onCompleteMentorApplication)
     router.post("/api/updateBasicDetails", [validator('updateBasicDetails')], procErr, updateBasicDetails)
     router.post("/api/updateSkillsDetails", [validator('updateSkillsDetails')], procErr, updateSkillsDetails)
+    router.post("/api/updateBookASlotDetails", [validator('updateBookASlotDetails')], procErr, updateBookASlotDetails)
+
+
+    router.post("/api/uploadPdf", procErr, uploadPdf)
+    router.post("/api/sendMail", procErr, testMail)
 
 }
