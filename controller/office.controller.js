@@ -42,7 +42,7 @@ exports.add = async (req, res) => {
         if (existingType) return res.status(400).send(req.polyglot.t('TYPE-ALREADY-EXIST'));     
 
         //save city 
-        newType = new Office(_.pick(req.body, ['title', 'image', 'address', 'country', 'state', 'city', 'phone', 'zipcode','created_at','modified_at']));
+        newType = new Office(_.pick(req.body, ['title', 'image', 'image_object','is_active','address', 'country', 'state', 'city', 'phone', 'zipcode','created_at','modified_at']));
         
         newType.save(async function (err, type) {
             
@@ -55,8 +55,6 @@ exports.add = async (req, res) => {
 
     
 }
-
-
 
 exports.listing = async (req, res) => {
 
@@ -103,6 +101,21 @@ exports.deleteOffice = async (req, res) => {
         return res.status(responseCode.CODES.SUCCESS.OK).send(true);
     }); 
    
+}
+exports.changeStatus = async(req, res) => {
+    let existingRecord = await Office.findOne({ _id: mongoose.Types.ObjectId(req.body.id) }, { _id: 1 });
+
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+    req.body['modified_at'] = new Date()
+        //update Office 
+        Office.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: { is_active: req.body.is_active } }, { new: true }, function(err, data) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+    });
 }
 
 

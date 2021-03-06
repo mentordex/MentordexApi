@@ -1,5 +1,5 @@
 const { procErr } = require('../utilities/processErrors')
-const { add, listing, deleteOffice } = require('../controller/office.controller')
+const { add, listing, deleteOffice, changeStatus } = require('../controller/office.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -11,4 +11,5 @@ module.exports = router => {
     router.post("/api/office/listing", procErr, listing)
 
     router.post("/api/office/deleteOffice", procErr, deleteOffice)
+    router.post("/api/office/changeStatus", procErr, changeStatus)
 }

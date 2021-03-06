@@ -38,6 +38,14 @@ var officeSchema = new mongoose.Schema({
         type: String, 
         trim:true
     },
+    image_object:{
+        
+    },
+    is_active: {
+        type: Boolean,
+        enum : [true, false],
+        default: true       
+    },
     
     created_at: {
         type: Date,

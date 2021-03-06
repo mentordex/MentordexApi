@@ -482,6 +482,7 @@ exports.categoryListing = async (req, res) => {
                 is_active:1,
                 is_visible_on_home: 1,
                 created_at: 1,
+                modified_at: 1,
                 "subcategory.title": 1
 
             }
@@ -548,6 +549,7 @@ exports.subcategoryListing = async(req, res) => {
                 'image_object': 1,
                 'category_id': 1,
                 'created_at': 1,
+                'modified_at': 1,
                 'category.title': 1,
 
             },

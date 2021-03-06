@@ -104,7 +104,7 @@ exports.addCity = async(req, res) => {
 
 
 
-        newRecord = new City(_.pick(req.body, ['title', 'image', 'is_active', 'zipcodes', 'country_id', 'state_id', 'count', 'created_at', 'modified_at']));
+        newRecord = new City(_.pick(req.body, ['title', 'image','image_object', 'is_active', 'zipcodes', 'country_id', 'state_id', 'count', 'created_at', 'modified_at']));
         console.log('newRecord', newRecord)
         newRecord.save(async function(err, data) {
 

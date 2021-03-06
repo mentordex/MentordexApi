@@ -36,7 +36,7 @@ exports.add = async (req, res) => {
             
 
         //save Banner 
-        newBanner = new Banner(_.pick(req.body, ['title', 'description', 'image', 'button_text', 'button_link', 'video_button_text', 'video_button_link', 'is_active', 'created_at', 'modified_at']));
+        newBanner = new Banner(_.pick(req.body, ['title', 'description', 'image', 'image_object','button_text', 'button_link', 'video_button_text', 'video_button_link', 'is_active', 'created_at', 'modified_at']));
         
         newBanner.save(async function (err, banner) {
             

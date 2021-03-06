@@ -21,8 +21,10 @@ aws.config.update({
 const s3 = new aws.S3();
 
 const fileFilter = (req, file, cb) => {
-    //console.log('req.body', req.body);
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+    console.log('req.body', req.body);
+    console.log('file', file);
+    if (file.mimetype ==='image/svg+xml'|| file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+        console.log('right')
         cb(null, true);
     } else if (file.mimetype === 'application/pdf') {
         let pdfBase64String = req.body.base64StringFile;
@@ -57,6 +59,8 @@ const upload = multer({
         acl: 'public-read',
         s3,
         bucket: config.get('aws.bucket'),
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        
         key: function(req, file, cb) {
             const folderName = (req.body.folder) ? req.body.folder + '/' : '';
             cb(null, folderName + Date.now().toString())

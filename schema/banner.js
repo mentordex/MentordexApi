@@ -16,6 +16,9 @@ var bannerSchema = new mongoose.Schema({
         type: String, 
         trim:true 
     },
+    image_object:{ 
+        
+    },
     button_text:{ 
         type: String, 
         trim:true 
@@ -32,10 +35,11 @@ var bannerSchema = new mongoose.Schema({
         type: String, 
         trim:true 
     }, 
-    is_active:{
-        type: Boolean, 
-        default:false
-    },      
+    is_active: {
+        type: Boolean,
+        enum : [true, false],
+        default: true       
+    },    
     created_at: {
         type: Date,
         default: new Date()
