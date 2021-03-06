@@ -32,10 +32,9 @@ exports.bannerListing = async(req, res) => {
    
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
         condition['title'] = { $regex: req.body['search'], $options: 'i' }
-        condition['description'] = { $regex: req.body['search'], $options: 'i' }
     }
 
-
+    console.log('condition', condition)
     let totalRecords = await Banner.count(condition);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
