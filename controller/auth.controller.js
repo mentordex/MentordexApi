@@ -19,7 +19,10 @@ const singleUpload = upload.single("file");
 templates = {
     mentor_signup: "d-a17aa33d0e4045aea26bd661787db861",
     mentor_verify_email: "d-7740a854506f4289926f78de2ced3951",
-    forgot_password: "d-ed1b699311b046358f8946a6a253d19e"
+    forgot_password: "d-ed1b699311b046358f8946a6a253d19e",
+    appointment_reschedule:"d-0a29a6c2ba154b71b0bc1b961ec2719b",
+    appointment_rejected:"d-c4c785901b23428bb7a62ca445195a0a",
+    appointment_approved:"d-a257325a49104382b15fd6400eeb9b2c"
 };
 
 
@@ -882,6 +885,69 @@ exports.updateBookASlotDetails = async(req, res) => {
     });
 
 }
+
+exports.updateNotes = async(req, res) => {
+    //checking unique email
+    const { userID } = req.body
+    let existingUser = await User.findOne({ _id: userID });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+    existingUser.admin_status = req.body.status;
+    if(req.body.status =='RESCHEDULED'){
+        existingUser.appointment_time = req.body.appointment_time
+        existingUser.appointment_date = req.body.appointment_date
+    }
+    existingUser.notes.push({ 
+        status:req.body.status,
+        notes:req.body.notes,
+        appointment_time:(req.body.status =='RESCHEDULED')?req.body.appointment_time:'',
+        appointment_date:(req.body.status =='RESCHEDULED')?req.body.appointment_date:'',
+        created_at:new Date()
+    });
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+        console.log('status',req.body.status)
+        let msg = ''
+        if(req.body.status =='RESCHEDULED'){
+             msg = {
+                to: existingUser.email,
+                from: config.get('sendgrid.from'),
+                templateId: templates['appointment_reschedule'],
+                dynamic_template_data: {
+                    appointment_date: req.body.appointment_date,
+                    appointment_time: req.body.appointment_time
+                }
+            };
+        }else if(req.body.status =='APPROVED'){
+             msg = {
+                to: existingUser.email,
+                from: config.get('sendgrid.from'),
+                templateId: templates['appointment_approved']
+                
+            };
+        }else if(req.body.status =='REJECTED'){
+            msg = {
+                to: existingUser.email,
+                from: config.get('sendgrid.from'),
+                templateId: templates['appointment_rejected']
+                
+            };
+        }
+        if(req.body.status =='REJECTED' || req.body.status =='APPROVED' || req.body.status =='RESCHEDULED'){
+            sgMail.send(msg, (error, result) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("That's wassup!");
+                }
+            });
+            
+        }    
+        
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });    
+}
+
 
 
 exports.uploadPdf = async(req, res) => {
