@@ -16,6 +16,7 @@ const { Activity } = require('../../schema/activity');
 const { Pageview } = require('../../schema/pageview');
 const { DayTimeslot } = require('../../schema/day_timeslot');
 const { Banner } = require('../../schema/banner');
+const { About } = require('../../schema/about');
 const responseCode = require('../../utilities/responseCode');
 var mongoose = require('mongoose');
 const adminObject = new Admin();
@@ -23,6 +24,10 @@ const adminObject = new Admin();
 const nodemailer = require("nodemailer");
 
 
+exports.aboutContent = async(req, res) => {
+    let data = await About.findOne({ });
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+}
 exports.bannerListing = async(req, res) => {
 
     const { size, pageNumber } = req.body
