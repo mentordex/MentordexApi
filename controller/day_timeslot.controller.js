@@ -1,6 +1,9 @@
 const _ = require('lodash');
 const config = require('config');
+//var async = require("async");
+//const waitFor = (ms) => new Promise(r => setTimeout(r, ms));
 const { DayTimeslot } = require('../schema/day_timeslot');
+const { User } = require('../schema/user');
 const responseCode = require('../utilities/responseCode');
 var mongoose = require('mongoose');
 
@@ -68,10 +71,30 @@ exports.changeDayStatus = async(req, res) => {
 
 exports.getAvailableSlots = async(req, res) => {
 
+    //console.log(req.body)
+
     let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1, });
 
     if (!existingRecord) return res.status(responseCode.CODES.SUCCESS.OK).send({ slots: false });
-    //if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-SLOTS-FOUND'));
+
+
+    var availableSlots = existingRecord.slots.filter(function(item) {
+        return item.isChecked !== false;
+    });
+
+    //console.log(availableSlots)
+
+    availableSlots.forEach(async function(element, index, object) {
+
+        let slotAlreadyBooked = await User.findOne({ appointment_date: req.body.getSelectedDate, appointment_time: element.slot }, { appointment_time: 1 });
+
+        if (slotAlreadyBooked || slotAlreadyBooked != null) {
+            //console.log(slotAlreadyBooked);
+            object.splice(index, 1);
+        }
+    });
+
+    //console.log(availableSlots);
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord);
 

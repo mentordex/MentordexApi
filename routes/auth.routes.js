@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, uploadPdf } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, uploadFile, deleteObject } = require('../controller/auth.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -47,6 +47,7 @@ module.exports = router => {
 
     /* Mentor Routes */
     router.post("/api/getMentorDetails", [validator('getMentorDetails')], procErr, getMentorDetails)
+    router.post("/api/getMentorProfileDetails", [validator('getMentorProfileDetails')], procErr, getMentorProfileDetails)
     router.post("/api/resendMentorEmailVerification", [validator('resendMentorEmailVerification')], procErr, resendMentorEmailVerification)
     router.post("/api/resendMentorPhoneVerification", [validator('resendMentorPhoneVerification')], procErr, resendMentorPhoneVerification)
     router.post("/api/submitMentorPhoneVerification", [validator('submitMentorPhoneVerification')], procErr, submitMentorPhoneVerification)
@@ -55,8 +56,16 @@ module.exports = router => {
     router.post("/api/updateBasicDetails", [validator('updateBasicDetails')], procErr, updateBasicDetails)
     router.post("/api/updateSkillsDetails", [validator('updateSkillsDetails')], procErr, updateSkillsDetails)
     router.post("/api/updateBookASlotDetails", [validator('updateBookASlotDetails')], procErr, updateBookASlotDetails)
+    router.post("/api/updateProfileBasicDetails", [validator('updateProfileBasicDetails')], procErr, updateProfileBasicDetails)
 
 
-    router.post("/api/uploadPdf", procErr, uploadPdf)
+    router.post("/api/updateProfileAcademicHistoryDetails", [validator('updateProfileAcademicHistoryDetails')], procErr, updateProfileAcademicHistoryDetails)
+
+
+    router.post("/api/updateProfileEmploymentHistoryDetails", [validator('updateProfileEmploymentHistoryDetails')], procErr, updateProfileEmploymentHistoryDetails)
+
+
+    router.post("/api/uploadFile", procErr, uploadFile)
+    router.post("/api/deleteObject", procErr, deleteObject)
 
 }

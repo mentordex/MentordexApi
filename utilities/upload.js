@@ -22,7 +22,7 @@ const s3 = new aws.S3();
 
 const fileFilter = (req, file, cb) => {
     //console.log('req.body', req.body);
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png' || file.mimetype === 'image/svg+xml' || file.mimetype === 'video/mp4' || file.mimetype === 'video/quicktime' || file.mimetype === 'video/x-msvideo' || file.mimetype === 'video/webm') {
         cb(null, true);
     } else if (file.mimetype === 'application/pdf') {
         let pdfBase64String = req.body.base64StringFile;
@@ -47,12 +47,13 @@ const fileFilter = (req, file, cb) => {
             cb(new Error('The file is corrupted. Kindly choose other file.'), false);
         }
     } else {
-        cb(new Error('Invalid file type, only JPG, JPEG ,PNG and PDF is allowed!'), false);
+        cb(new Error('Invalid file type.'), false);
     }
 }
 
 const upload = multer({
     fileFilter,
+    limits: { fieldSize: 25 * 1024 * 1024 },
     storage: multerS3({
         acl: 'public-read',
         s3,

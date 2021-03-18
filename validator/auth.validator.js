@@ -95,6 +95,14 @@ exports.validator = functionName => {
                 ]
             }
 
+        case 'getMentorProfileDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
         case 'resendMentorEmailVerification':
             {
                 return [
@@ -134,6 +142,28 @@ exports.validator = functionName => {
             }
 
         case 'updateBookASlotDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'updateProfileAcademicHistoryDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'updateProfileBasicDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'updateProfileEmploymentHistoryDetails':
             {
                 return [
                     check('userID')

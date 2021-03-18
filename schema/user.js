@@ -15,15 +15,60 @@ var userSchema = new mongoose.Schema({
     phone: { type: String },
     phone_token: { type: String },
     email_token: { type: String },
-    profile_pic: {
-        type: String,
-    },
+    profile_image: [{
+        file_path: {
+            type: String,
+            trim: true
+        },
+        file_name: {
+            type: String,
+            trim: true
+        },
+        file_key: {
+            type: String,
+            trim: true
+        },
+        file_mimetype: {
+            type: String,
+            trim: true
+        },
+        file_category: {
+            type: String,
+            trim: true
+        }
+    }],
+    introduction_video: [{
+        file_path: {
+            type: String,
+            trim: true
+        },
+        file_name: {
+            type: String,
+            trim: true
+        },
+        file_key: {
+            type: String,
+            trim: true
+        },
+        file_mimetype: {
+            type: String,
+            trim: true
+        },
+        file_category: {
+            type: String,
+            trim: true
+        }
+    }],
     address: {
         type: String,
     },
-    about_me: {
+    tagline: {
         type: String,
     },
+    bio: {
+        type: String,
+    },
+    servicable_zipcodes: [],
     skype: {
         type: String,
     },
@@ -82,10 +127,12 @@ var userSchema = new mongoose.Schema({
         default: 'MALE'
     },
     subcategories: [],
+    appointment_time: {
+        type: String,
+    },
     appointment_date: {
         type: String,
     },
-    appointment_time: [],
     references: [{
         name: {
             type: String,
@@ -112,7 +159,84 @@ var userSchema = new mongoose.Schema({
             trim: true
         },
     }],
-    letter_of_recommendation: [],
+    academics: [{
+        institution_name: {
+            type: String,
+            trim: true
+        },
+        grade: {
+            type: String,
+            trim: true
+        },
+        area_of_study: {
+            type: String,
+            trim: true
+        },
+        degree: {
+            type: String,
+            trim: true
+        },
+        start_year: {
+            type: String,
+            trim: true
+        },
+        end_year: {
+            type: String,
+            trim: true
+        },
+    }],
+    employments: [{
+        company: {
+            type: String,
+            trim: true
+        },
+        city: {
+            type: String,
+            trim: true
+        },
+        state: {
+            type: String,
+            trim: true
+        },
+        title: {
+            type: String,
+            trim: true
+        },
+        start_year: {
+            type: String,
+            trim: true
+        },
+        end_year: {
+            type: String,
+            trim: true
+        },
+        description: {
+            type: String,
+            trim: true
+        },
+    }],
+    letter_of_recommendation: [{
+        file_path: {
+            type: String,
+            trim: true
+        },
+        file_name: {
+            type: String,
+            trim: true
+        },
+        file_key: {
+            type: String,
+            trim: true
+        },
+        file_mimetype: {
+            type: String,
+            trim: true
+        },
+        file_category: {
+            type: String,
+            trim: true
+        }
+    }],
     category_id: {
         type: Schema.Types.ObjectId,
         ref: 'Category',

@@ -27,6 +27,8 @@ exports.messages = {
         "PROPERTY-ADDED": "Your property information has been added successfully.",
         "NO-RECORD-FOUND": "No Record Found",
         "NO-SLOTS-FOUND": "No Slots Available",
+        "FILE-NOT-FOUND": "File Not Found.",
+        "FILE-REMOVED": "File Removed.",
         "CONTACT-REQUEST": "New Contact Request",
         "OLD-NEW-PASSWORD-MISMATCH": "Old password does not match.",
         "USE-ANOTHER-PASSWORD": "You can not use previous password as new password.",

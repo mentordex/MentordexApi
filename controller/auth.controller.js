@@ -22,6 +22,22 @@ templates = {
     forgot_password: "d-ed1b699311b046358f8946a6a253d19e"
 };
 
+const aws = require('aws-sdk');
+//console.log(config.get('aws.accessKey')+':'+config.get('aws.secretKey')+':'+config.get('aws.region')+':'+config.get('aws.bucket'))
+aws.config.update({
+    // Your SECRET ACCESS KEY from AWS should go here,
+    // Never share it!
+    // Setup Env Variable, e.g: process.env.SECRET_ACCESS_KEY
+    secretAccessKey: config.get('aws.secretKey'),
+    // Not working key, Your ACCESS KEY ID from AWS should go here,
+    // Never share it!
+    // Setup Env Variable, e.g: process.env.ACCESS_KEY_ID
+    accessKeyId: config.get('aws.accessKey'),
+    //region: config.get('aws.region'), // region of your bucket
+});
+
+const s3 = new aws.S3();
+
 
 exports.emailExist = async(req, res) => {
 
@@ -653,6 +669,21 @@ exports.getMentorDetails = async(req, res) => {
 
 }
 
+exports.getMentorProfileDetails = async(req, res) => {
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['academics', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio']));
+
+}
+
 exports.resendMentorPhoneVerification = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
     const { userID, phoneToken } = req.body
@@ -883,8 +914,82 @@ exports.updateBookASlotDetails = async(req, res) => {
 
 }
 
+exports.updateProfileBasicDetails = async(req, res) => {
 
-exports.uploadPdf = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, profile_image, introduction_video, tagline, bio, servicable_zipcodes } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.profile_image = profile_image;
+    existingUser.introduction_video = introduction_video;
+    existingUser.tagline = tagline;
+    existingUser.bio = bio;
+    existingUser.servicable_zipcodes = servicable_zipcodes;
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
+exports.updateProfileAcademicHistoryDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, academics } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.academics = academics;
+
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id']));
+    });
+
+}
+
+exports.updateProfileEmploymentHistoryDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, employments } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.employments = employments;
+
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id']));
+    });
+
+}
+
+exports.uploadFile = async(req, res) => {
 
     singleUpload(req, res, function(err) {
         if (err) {
@@ -897,6 +1002,33 @@ exports.uploadPdf = async(req, res) => {
             fileName: req.file.originalname,
             fileMimeType: req.file.mimetype
         });
+    });
+}
+
+/**
+ * Function to delete object from aws s3 bucket
+ */
+exports.deleteObject = async(req, res) => {
+
+    let params = {
+        Bucket: config.get('aws.bucket'),
+        Key: req.body.fileKey
+    };
+
+
+    s3.headObject(params, function(err, data) {
+
+        if (err) {
+            return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('FILE-NOT-FOUND'));
+        } else {
+            s3.deleteObject(params, function(err, data) {
+                if (err) {
+                    return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(err.message);
+                } else {
+                    return res.status(responseCode.CODES.SUCCESS.OK).send({ response: req.polyglot.t('FILE-REMOVED') });
+                }
+            });
+        }
     });
 }
 
