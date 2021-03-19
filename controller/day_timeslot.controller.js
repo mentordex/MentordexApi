@@ -52,6 +52,11 @@ exports.addDayTimeslot = async(req, res) => {
 
 }
 
+exports.fetchSlot = async(req, res) => {
+    let existingRecord = await DayTimeslot.findOne({ _id: mongoose.Types.ObjectId(req.body.id) }, { _id: 1 });
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord);
+}
+
 
 exports.changeDayStatus = async(req, res) => {
     let existingRecord = await DayTimeslot.findOne({ _id: mongoose.Types.ObjectId(req.body.id) }, { _id: 1 });
@@ -69,6 +74,7 @@ exports.changeDayStatus = async(req, res) => {
     });
 }
 
+/*
 exports.getAvailableSlots = async(req, res) => {
 
     //console.log(req.body)
@@ -97,5 +103,39 @@ exports.getAvailableSlots = async(req, res) => {
     //console.log(availableSlots);
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord);
+
+}*/
+
+
+exports.getAvailableSlots = async(req, res) => {
+
+
+
+    let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1 });
+
+    if (!existingRecord) return res.status(responseCode.CODES.SUCCESS.OK).send({ slots: false });
+    //if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-SLOTS-FOUND'));
+
+    var availableSlots = existingRecord.slots.filter(function(item) {
+        return item.isChecked !== false;
+    });
+
+
+
+    let slotAlreadyBooked = await User.find({ appointment_date: req.body.getSelectedDate }, { appointment_time: 1, _id: 0 });
+
+    //console.log(slotAlreadyBooked)
+
+    let existingSlots = slotAlreadyBooked.map(slot => slot.appointment_time);
+
+    //console.log(existingSlots)
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(availableSlots.filter(function(slot) {
+
+        if (existingSlots.indexOf(slot.slot) == -1) {
+
+            return slot;
+        }
+    }));
 
 }

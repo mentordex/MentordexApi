@@ -21,6 +21,7 @@ exports.messages = {
         "CITY-ID-REQUIRED": "'city' is required.",
         "CITY-ID-SHOULD-NOT-EMPTY": "'city' can not be empty.",
         "CITY-ALREADY-EXIST": "Entered city is already exist.",
+        "DAY-ALREADY-EXIST": "Slot already exist in our records.",
         "CATEGORY-ALREADY-EXIST": "Entered category is already exist.",
         "OTP-INVALID": "Invalid OTP.",
         "EMAIL-VERIFY-FAILED": "Failed to verify your email ID.",
@@ -58,7 +59,7 @@ exports.messages = {
         "STATE-ID-REQUIRED": "State is requuired",
         "STATUS-ID-REQUIRED": "Status is requuired",
 
-        "IMAGE-REQUIRED": "Image is required and cvan not be empty"
+        "IMAGE-REQUIRED": "Image is required and can not be empty"
     },
     es: {
         // Mensajes de error

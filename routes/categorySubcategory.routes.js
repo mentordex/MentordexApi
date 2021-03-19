@@ -1,6 +1,6 @@
 const { validator } = require('../validator/categorySubcategory.validator')
 const { procErr } = require('../utilities/processErrors')
-const { addCategory, addSubcategory, categoryListing, subcategoryListing, allSubcategory, deleteCategory, deleteSubcategory, uploadImage } = require('../controller/categorySubcategory.controller')
+const { addCategory, addSubcategory, categoryListing, subcategoryListing, allSubcategory, deleteCategory, deleteSubcategory, uploadImage, changeSubcategoryStatus } = require('../controller/categorySubcategory.controller')
 const tokenValidator = require('../utilities/token');//calling token checking middleware
 
 // Routes =============================================================
@@ -24,4 +24,6 @@ module.exports = router => {
     router.post("/api/category/deleteCategory", procErr, deleteCategory)
 
     router.post("/api/subcategory/deleteSubcategory", procErr, deleteSubcategory)
+    router.post("/api/subcategory/changeSubcategoryStatus", procErr, changeSubcategoryStatus)
+    
 }

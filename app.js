@@ -54,7 +54,8 @@ require("./routes/office.routes")(app)
 require("./routes/team.routes")(app)
 require("./routes/faqcategory.routes")(app)
 require("./routes/day_timeslot.routes")(app)
-    //Interceptors
-    //app.use(error);//Error Handler
+require("./routes/banner.routes")(app)
+require("./routes/about.routes")(app)
+//Interceptors
 
 module.exports = app;

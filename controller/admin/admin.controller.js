@@ -15,11 +15,52 @@ const { Amenity } = require('../../schema/amenity');
 const { Activity } = require('../../schema/activity');
 const { Pageview } = require('../../schema/pageview');
 const { DayTimeslot } = require('../../schema/day_timeslot');
+const { Banner } = require('../../schema/banner');
+const { About } = require('../../schema/about');
 const responseCode = require('../../utilities/responseCode');
 var mongoose = require('mongoose');
 const adminObject = new Admin();
 //sgMail.setApiKey(config.get('sendgrid.key'));
 const nodemailer = require("nodemailer");
+
+
+exports.aboutContent = async(req, res) => {
+    let data = await About.findOne({ });
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+}
+exports.bannerListing = async(req, res) => {
+
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = -1
+   
+    if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
+        condition['title'] = { $regex: req.body['search'], $options: 'i' }
+    }
+
+    console.log('condition', condition)
+    let totalRecords = await Banner.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+
+    let records = await Banner.find(condition).skip(skip).limit(limit).sort(sortBy);
+    let data = {
+        records: records,
+        total_records: totalRecords
+    }
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+
+
+}
 
 /*
  * Here we would probably call the DB to confirm the user exists
@@ -90,6 +131,152 @@ exports.adminListing = async(req, res) => {
 
 }
 
+exports.appointmentListing = async(req, res) => {
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+   
+    condition['role'] = 'MENTOR'
+  
+    if (_.has(req.body, ['search']) && (req.body['search']) && (req.body['search']).length > 0) {
+        //condition['title'] = { $regex: req.body['search'], $options: 'i' }
+        condition['first_name'] = { $regex: req.body['search'], $options: 'i' }
+    }
+    if (_.has(req.body, ['from']) && _.has(req.body, ['to']) && (req.body['to']).length > 0 && (req.body['from']).length > 0) {
+        //condition['title'] = { $regex: req.body['search'], $options: 'i' }
+        condition['created_at'] = {
+            '$gte': new Date(req.body['from']),
+            '$lte': new Date(req.body['to'])
+          }
+    }
+
+  
+    if (_.has(req.body, ['status']) && (req.body['status']).length > 0 && req.body['status']!='ALL') {
+        condition['admin_status'] = req.body['status'];
+    }
+
+console.log('condition',condition)
+    let totalRecords = await User.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+    User.aggregate(
+    [
+        {
+            $match: condition
+        },      
+       
+        {
+
+            "$lookup": {
+                from: "categories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "countries",
+                localField: "country_id",
+                foreignField: "_id",
+                as: "country",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "states",
+                localField: "state_id",
+                foreignField: "_id",
+                as: "state",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "cities",
+                localField: "city_id",
+                foreignField: "_id",
+                as: "city",
+            }
+        },
+        {
+            "$lookup": {
+              from: "subcategories",
+              localField: "subcategories",
+              foreignField: "_id",
+              as: "subcategory",
+            } 
+          },
+           
+      
+       
+        {
+            $project: {
+                name: 1,
+                letter_of_recommendation:1,
+                first_name:1,
+                is_active: 1,
+                admin_status:1,
+                email: 1,
+                fax: 1,
+                mobile: 1,
+                phone:1,
+                created_at: 1,
+                office_phone: 1,
+                profile_pic: 1,               
+                role: 1,
+                'category.title': 1,
+                'country.title': 1,
+                'state.title': 1,
+                'city.title': 1,
+                'subcategory.title':1,
+                subcategories:1,
+                appointment_date:1,
+                appointment_time:1,
+                gender:1,
+                primary_language:1,
+                dob:1,
+                address1:1,
+                address2:1,
+                social_links:1,
+                zipcode:1,
+                notes:1,
+                references:1
+
+            },
+        },
+
+
+
+    ], function(err, members) {
+
+        let data = {
+            records: members,
+            total_records: totalRecords
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+    })
+     
+
+    
+    /* let users = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
+     let data = {
+         records:users,
+         total_records:totalRecords
+     }
+
+     return res.status(responseCode.CODES.SUCCESS.OK).send(data);*/
+
+}
+
 exports.userListing = async(req, res) => {
 
 
@@ -100,13 +287,26 @@ exports.userListing = async(req, res) => {
     sortBy['created_at'] = -1
 
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
-        condition['title'] = { $regex: req.body['search'], $options: 'i' }
-        condition['email'] = { $regex: req.body['search'], $options: 'i' }
+        condition['first_name'] = { $regex: req.body['search'], $options: 'i' }        
     }
     if (_.has(req.body, ['user_type']) && (req.body['user_type']).length > 0) {
+        if(req.body['user_type']=='MENTOR'){
+            condition['admin_status'] = 'APPROVED';
+        }
         condition['role'] = req.body['user_type'];
+    }else{
+        
+        condition =  
+            {
+                $or: [
+                    { role:'PARENT' },
+                    { $and: [{ role : 'MENTOR' }, { "admin_status" : 'APPROVED' }] }
+                
+                ]
+            }
+      
     }
-
+    console.log(condition)
 
     let totalRecords = await User.count(condition);
     //calculating the limit and skip attributes to paginate records
@@ -133,6 +333,7 @@ exports.userListing = async(req, res) => {
         {
             $project: {
                 'name': 1,
+                first_name:1,
                 is_active: 1,
                 'email': 1,
                 'fax': 1,
@@ -441,8 +642,11 @@ exports.categoryListing = async (req, res) => {
                 title: 1,
                 count: 1,
                 image: 1,
+                image_object: 1,
+                is_active:1,
                 is_visible_on_home: 1,
                 created_at: 1,
+                modified_at: 1,
                 "subcategory.title": 1
 
             }
@@ -505,8 +709,11 @@ exports.subcategoryListing = async(req, res) => {
             $project: {
                 'title': 1,
                 'image': 1,
+                'is_active': 1,
+                'image_object': 1,
                 'category_id': 1,
                 'created_at': 1,
+                'modified_at': 1,
                 'category.title': 1,
 
             },

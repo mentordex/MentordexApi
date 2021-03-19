@@ -330,6 +330,7 @@ var userSchema = new mongoose.Schema({
         enum: ['NEW', 'APPROVED', 'RESCHEDULED', 'IN-PROCESS', 'REJECTED', 'PENDING'],
         default: 'PENDING'
     },
+    notes: [],
 
 
 }, { validateBeforeSave: false });

@@ -36,7 +36,7 @@ exports.add = async (req, res) => {
           
 
         //save Team 
-        newTeam = new Team(_.pick(req.body, ['name','title', 'image', 'description','created_at','modified_at']));
+        newTeam = new Team(_.pick(req.body, ['name','title', 'image', 'image_object', 'is_active', 'description','created_at','modified_at']));
         
         newTeam.save(async function (err, type) {
             
@@ -97,4 +97,18 @@ exports.deleteTeam = async (req, res) => {
 }
 
 
+exports.changeStatus = async(req, res) => {
+    let existingRecord = await Team.findOne({ _id: mongoose.Types.ObjectId(req.body.id) }, { _id: 1 });
 
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+    req.body['modified_at'] = new Date()
+        //update Office 
+        Team.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.id) }, { $set: { is_active: req.body.is_active } }, { new: true }, function(err, data) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+    });
+}

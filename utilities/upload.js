@@ -58,6 +58,8 @@ const upload = multer({
         acl: 'public-read',
         s3,
         bucket: config.get('aws.bucket'),
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+
         key: function(req, file, cb) {
             const folderName = (req.body.folder) ? req.body.folder + '/' : '';
             cb(null, folderName + Date.now().toString())

@@ -10,10 +10,18 @@ var subcategorySchema = new mongoose.Schema({
         ref: 'Category',
     },
     image: { type: String, trim:true },
+    image_object:{
+        
+    },
     count: {  
         type: Number, 
         default:0
-    },    
+    },  
+    is_active: {
+        type: Boolean,
+        enum : [true, false],
+        default: true       
+    },  
     created_at: {
         type: Date,
         default: new Date()

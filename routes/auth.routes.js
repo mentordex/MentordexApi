@@ -1,6 +1,7 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, uploadFile, deleteObject } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, uploadFile, deleteObject, testMail, updateNotes } = require('../controller/auth.controller')
+
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -59,6 +60,7 @@ module.exports = router => {
     router.post("/api/updateProfileBasicDetails", [validator('updateProfileBasicDetails')], procErr, updateProfileBasicDetails)
 
 
+
     router.post("/api/updateProfileAcademicHistoryDetails", [validator('updateProfileAcademicHistoryDetails')], procErr, updateProfileAcademicHistoryDetails)
 
 
@@ -67,5 +69,8 @@ module.exports = router => {
 
     router.post("/api/uploadFile", procErr, uploadFile)
     router.post("/api/deleteObject", procErr, deleteObject)
+    router.post("/api/sendMail", procErr, testMail)
+
+    router.post("/api/updateNotes", updateNotes)
 
 }
