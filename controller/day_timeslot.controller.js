@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const config = require('config');
 const { DayTimeslot } = require('../schema/day_timeslot');
+const { User } = require('../schema/user');
 const responseCode = require('../utilities/responseCode');
 var mongoose = require('mongoose');
 
@@ -76,11 +77,20 @@ exports.changeDayStatus = async(req, res) => {
 
 exports.getAvailableSlots = async(req, res) => {
 
-    let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1, });
+    let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1});
 
     if (!existingRecord) return res.status(responseCode.CODES.SUCCESS.OK).send({ slots: false });
     //if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-SLOTS-FOUND'));
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord);
+    let slotAlreadyBooked = await User.find({ appointment_date: req.body.getSelectedDate}, { appointment_time: 1, _id:0 });
+    
+   let existingSlots = slotAlreadyBooked.map(slot => slot.appointment_time[0]);
+    return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord.slots.filter(function(slot){
+       
+        if(existingSlots.indexOf(slot.slot)==-1){
+          
+            return slot;
+        }
+    }));
 
 }

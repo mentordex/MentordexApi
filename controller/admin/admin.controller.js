@@ -153,6 +153,10 @@ exports.appointmentListing = async(req, res) => {
   
     if (_.has(req.body, ['status']) && (req.body['status']).length > 0 && req.body['status']!='ALL') {
         condition['admin_status'] = req.body['status'];
+    }else{
+        condition['admin_status'] = {
+            '$ne': 'PENDING'
+          }
     }
 
 console.log('condition',condition)
@@ -183,6 +187,33 @@ console.log('condition',condition)
         {
 
             "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id1",
+                foreignField: "_id",
+                as: "subcategory1",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id2",
+                foreignField: "_id",
+                as: "subcategory2",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id3",
+                foreignField: "_id",
+                as: "subcategory3",
+            }
+        },
+        {
+
+            "$lookup": {
                 from: "countries",
                 localField: "country_id",
                 foreignField: "_id",
@@ -207,17 +238,7 @@ console.log('condition',condition)
                 as: "city",
             }
         },
-        {
-            "$lookup": {
-              from: "subcategories",
-              localField: "subcategories",
-              foreignField: "_id",
-              as: "subcategory",
-            } 
-          },
-           
-      
-       
+        
         {
             $project: {
                 name: 1,
@@ -237,7 +258,9 @@ console.log('condition',condition)
                 'country.title': 1,
                 'state.title': 1,
                 'city.title': 1,
-                'subcategory.title':1,
+                'subcategory1.title':1,
+                'subcategory2.title':1,
+                'subcategory3.title':1,
                 subcategories:1,
                 appointment_date:1,
                 appointment_time:1,
