@@ -77,18 +77,31 @@ exports.changeDayStatus = async(req, res) => {
 
 exports.getAvailableSlots = async(req, res) => {
 
-    let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1});
+
+
+    let existingRecord = await DayTimeslot.findOne({ day: req.body.day, is_active: true }, { slots: 1 });
 
     if (!existingRecord) return res.status(responseCode.CODES.SUCCESS.OK).send({ slots: false });
     //if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-SLOTS-FOUND'));
 
-    let slotAlreadyBooked = await User.find({ appointment_date: req.body.getSelectedDate}, { appointment_time: 1, _id:0 });
-    
-   let existingSlots = slotAlreadyBooked.map(slot => slot.appointment_time[0]);
-    return res.status(responseCode.CODES.SUCCESS.OK).send(existingRecord.slots.filter(function(slot){
-       
-        if(existingSlots.indexOf(slot.slot)==-1){
-          
+    var availableSlots = existingRecord.slots.filter(function(item) {
+        return item.isChecked !== false;
+    });
+
+
+
+    let slotAlreadyBooked = await User.find({ appointment_date: req.body.getSelectedDate }, { appointment_time: 1, _id: 0 });
+
+    //console.log(slotAlreadyBooked)
+
+    let existingSlots = slotAlreadyBooked.map(slot => slot.appointment_time);
+
+    //console.log(existingSlots)
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(availableSlots.filter(function(slot) {
+
+        if (existingSlots.indexOf(slot.slot) == -1) {
+
             return slot;
         }
     }));
