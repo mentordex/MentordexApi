@@ -39,6 +39,7 @@ exports.messages = {
         'emailRequiredField': "'email/Phone Number' is a required field.",
         'emailIsEmail': "This is not a valid email address.",
         'passwordRequiredField': "'password' is a required field.",
+        'ADD-YOUR-BILLING-METHOD': "Add your billing method to send booking request to mentor.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",

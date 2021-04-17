@@ -170,6 +170,62 @@ exports.validator = functionName => {
                     .exists().withMessage('USER-ID-REQUIRED')
                 ]
             }
+        case 'updateProfileAchievementDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'updateProfileHourlyRateDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'updateProfileSocialLinksDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'buySubscription':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'addYourPaymentMethod':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'getSavedPaymentMethod':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'getMentorProfileDetailsById':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED'),
+
+                    check('mentorId')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
 
         case 'submitMentorPhoneVerification':
             {

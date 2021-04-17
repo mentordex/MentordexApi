@@ -56,6 +56,6 @@ require("./routes/faqcategory.routes")(app)
 require("./routes/day_timeslot.routes")(app)
 require("./routes/banner.routes")(app)
 require("./routes/about.routes")(app)
-//Interceptors
+    //Interceptors
 
 module.exports = app;

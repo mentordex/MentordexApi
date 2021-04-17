@@ -130,6 +130,9 @@ var userSchema = new mongoose.Schema({
     appointment_time: {
         type: String,
     },
+    hourly_rate: {
+        type: String,
+    },
     appointment_date: {
         type: String,
     },
@@ -173,6 +176,36 @@ var userSchema = new mongoose.Schema({
             trim: true
         },
         degree: {
+            type: String,
+            trim: true
+        },
+        start_year: {
+            type: String,
+            trim: true
+        },
+        end_year: {
+            type: String,
+            trim: true
+        },
+    }],
+    achievements: [{
+        title: {
+            type: String,
+            trim: true
+        },
+        years_of_learning: {
+            type: String,
+            trim: true
+        },
+        associated_with: {
+            type: String,
+            trim: true
+        },
+        issuer: {
+            type: String,
+            trim: true
+        },
+        description: {
             type: String,
             trim: true
         },
@@ -286,6 +319,79 @@ var userSchema = new mongoose.Schema({
     subcategory_id3: {
         type: Schema.Types.ObjectId,
         ref: 'Subcategory'
+    },
+    payment_details: [{
+        stripe_card_id: {
+            type: String,
+            trim: true
+        },
+        credit_card_number: {
+            type: Number,
+            trim: true
+        },
+        card_holder_name: {
+            type: String,
+            trim: true
+
+        },
+        card_type: {
+            type: String,
+            trim: true
+        },
+        exp_month: {
+            type: String,
+            trim: true
+        },
+        exp_year: {
+            type: String,
+            trim: true
+        },
+        default: {
+            type: Boolean,
+            //required: true,               
+            default: false
+        }
+    }],
+    billing_details: [{
+        address1: {
+            type: String,
+            trim: true
+        },
+        address2: {
+            type: String,
+            trim: true
+        },
+        country: {
+            type: String,
+            trim: true
+        },
+        state: {
+            type: String,
+            trim: true
+        },
+        city: {
+            type: String,
+            trim: true
+        },
+        zipcode: {
+            type: String,
+            trim: true
+        }
+    }],
+    stripe_customer_id: {
+        type: String,
+        //unique: true,
+        trim: true
+    },
+    subscription_id: {
+        type: String,
+        //unique: true,
+        trim: true
+    },
+    price_id: {
+        type: String,
+        //unique: true,
+        trim: true
     },
     role: {
         type: String,

@@ -41,6 +41,8 @@ aws.config.update({
 
 const s3 = new aws.S3();
 
+const stripe = require('stripe')(config.get('stripeConfig.sandboxSecretKey'));
+
 
 exports.emailExist = async(req, res) => {
 
@@ -598,7 +600,7 @@ exports.memberListing = async(req, res) => {
     console.log('totalRecords', totalRecords);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
-    console.log('totalPages', totalPages);
+    //console.log('totalPages', totalPages);
     let start = pageNumber * size;
 
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
@@ -683,7 +685,72 @@ exports.getMentorProfileDetails = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['academics', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'admin_status']));
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'admin_status']));
+
+}
+
+exports.getMentorProfileDetailsById = async(req, res) => {
+
+    let condition = {};
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, mentorId } = req.body
+
+
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+    /*
+        condition['_id'] = mentorId;
+        User.aggregate([{
+                $match: condition
+            },
+            {
+
+                "$lookup": {
+                    from: "subcategories",
+                    localField: "_id",
+                    foreignField: "subcategory_id1",
+                    as: "subcategory",
+                }
+            },
+            {
+                $project: {
+                    'academics': 1,
+                    'achievements': 1,
+                    'employments': 1,
+                    'profile_image': 1,
+                    'introduction_video': 1,
+                    'tagline': 1,
+                    'servicable_zipcodes': 1,
+                    'bio': 1,
+                    'hourly_rate': 1,
+                    'website': 1,
+                    'first_name': 1,
+                    'last_name': 1,
+                    'primary_language': 1,
+                    'last_name': 1,
+                    'last_name': 1,
+                    'subcategory.title': 1,
+                },
+            }
+        ], function(err, profileDetails) {
+
+            let data = {
+                records: profileDetails,
+
+            }
+            return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+        })
+        */
+
+
+    let fetchMentorProfile = await User.findOne({ _id: mentorId });
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(fetchMentorProfile, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'first_name', 'last_name', 'primary_language']));
 
 }
 
@@ -998,6 +1065,77 @@ exports.updateProfileEmploymentHistoryDetails = async(req, res) => {
 
 }
 
+exports.updateProfileAchievementDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, achievements } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.achievements = achievements;
+
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id']));
+    });
+
+}
+
+exports.updateProfileHourlyRateDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, hourly_rate } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.hourly_rate = hourly_rate;
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
+exports.updateProfileSocialLinksDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, website } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.website = website;
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
+
 exports.uploadFile = async(req, res) => {
 
     singleUpload(req, res, function(err) {
@@ -1076,6 +1214,7 @@ exports.updateNotes = async(req, res) => {
     });
 }
 
+
 /**
  * Function to delete object from aws s3 bucket
  */
@@ -1118,6 +1257,461 @@ exports.testMail = async(req, res) => {
     });
 
 }
+
+exports.buySubscription = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const { userID, priceId } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: req.body.userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let PaymentDetailsArray = [];
+    let userData = {};
+    let cardData = {};
+    let subscriptionData = {};
+    let cardResponse, saveCustomer, saveSubscription;
+
+
+    let CardDetails = {
+            number: req.body.payment_details.credit_card_number,
+            exp_month: parseInt(req.body.payment_details.expiry_month),
+            exp_year: parseInt(req.body.payment_details.expiry_year),
+            cvc: req.body.payment_details.cvc_number,
+            name: req.body.payment_details.credit_card_first_name + ' ' + req.body.payment_details.credit_card_last_name,
+        }
+        //console.log(CardDetails);
+        //return;
+
+    // Create a Card Token	
+    stripe.tokens.create({
+            card: {
+                number: req.body.payment_details.credit_card_number,
+                exp_month: parseInt(req.body.payment_details.expiry_month),
+                exp_year: parseInt(req.body.payment_details.expiry_year),
+                cvc: req.body.payment_details.cvc_number,
+                name: req.body.payment_details.credit_card_first_name + ' ' + req.body.payment_details.credit_card_last_name,
+            },
+        },
+        async function(err, token) {
+            if (err) {
+                handleStripeError(err, res)
+            } // Car Token Error
+            if (token) {
+                //console.log(token);
+                if (isEmpty(existingUser.stripe_customer_id)) { // if new customer
+                    userData = { 'first_name': existingUser.first_name, 'last_name': existingUser.last_name, 'email': existingUser.email, 'description': 'Adding Mentor as a Customer.', 'token': token.id, 'id': req.body.userID, 'user_type': 'mentor' }
+
+                    saveCustomer = await saveNewCustomer(userData, res); // Save New Customer
+                    //console.log(saveCustomer);
+
+                    if (saveCustomer.id) {
+                        cardData = { 'customer_id': saveCustomer.id, 'token': token.id };
+                        cardResponse = await saveNewCard(cardData, res); // save New Card
+                        if (cardResponse.id) {
+
+                            subscriptionData = { 'customer_id': saveCustomer.id, 'price_id': req.body.priceId }
+
+                            saveSubscription = await createSubscription(subscriptionData, res);
+                            //console.log(saveSubscription);
+                            if (saveSubscription.id) {
+
+                                PaymentDetailsArray = [];
+                                PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month }); // automcatically set default to true
+
+                                // Update Mentor Customer Id and Payment Details
+                                existingUser.stripe_customer_id = saveCustomer.id;
+                                existingUser.subscription_id = saveSubscription.id;
+                                existingUser.price_id = req.body.priceId;
+                                existingUser.payment_details = PaymentDetailsArray;
+                                existingUser.billing_details = req.body.billing_details;
+                                existingUser.save(function(err, user) {
+                                    if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                                    // todo: don't forget to handle err
+
+                                    return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
+                                });
+
+                            }
+
+                        }
+                    }
+
+
+
+                } else {
+
+                    cardData = { 'customer_id': existingUser.stripe_customer_id, 'token': token.id };
+
+                    cardResponse = await saveNewCard(cardData, res); // Save New Card Details on Stripe
+                    //console.log('cardResponse', cardResponse);
+                    if (cardResponse.id) {
+
+                        // Save Payment Details in DB
+                        if (isEmpty(existingUser.payment_details)) {
+
+
+                            PaymentDetailsArray = [];
+                            PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month }); //automatically set default to true
+
+
+                        } else {
+
+                            PaymentDetailsArray = existingUser.payment_details;
+
+                            // check new default card request recieved
+                            if (req.body.payment_details.default_card) {
+
+                                // check if there is any previous default card method available 
+                                let getPreviousDefaultCard = PaymentDetailsArray.filter((l) => l.default).map((l) => l);
+
+                                if (getPreviousDefaultCard) {
+                                    // update All Previous Default Method to false				
+                                    for (var x = 0; x < PaymentDetailsArray.length; x++) {
+                                        PaymentDetailsArray[x].default = false;
+                                    }
+
+                                }
+
+
+                                // Update Customer Stripe API to set New Default Payment Method
+                                cardData = { 'customer_id': existingUser.stripe_customer_id, 'id': cardResponse.id };
+                                await updateCustomerDefaultPaymentMethod(cardData, res);
+                            }
+
+
+                            PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': req.body.payment_details.default_card, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month });
+
+                        }
+
+                        subscriptionData = { 'customer_id': existingUser.stripe_customer_id, 'price_id': req.body.priceId }
+
+                        saveSubscription = await createSubscription(subscriptionData, res);
+                        //console.log(saveSubscription);
+                        if (saveSubscription.id) {
+                            // Update Payment Details Array
+                            existingUser.payment_details = PaymentDetailsArray;
+                            existingUser.subscription_id = saveSubscription.id;
+                            //existingUser.invoice_id = saveSubscription.latest_invoice;
+                            existingUser.price_id = req.body.priceId;
+                            existingUser.billing_details = req.body.billing_details;
+                            existingUser.save(function(err, user) {
+                                if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                                // todo: don't forget to handle err
+
+                                return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
+                            });
+
+                        }
+
+
+
+                    }
+
+
+                }
+
+            } //if Token
+
+        }); // Create Card Token
+
+}
+
+exports.addYourPaymentMethod = async(req, res) => {
+
+    console.log(req.body);
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: req.body.userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let PaymentDetailsArray = [];
+    let userData = {};
+    let cardData = {};
+    let subscriptionData = {};
+    let cardResponse, saveCustomer, saveSubscription;
+
+
+    let CardDetails = {
+            number: req.body.payment_details.credit_card_number,
+            exp_month: parseInt(req.body.payment_details.expiry_month),
+            exp_year: parseInt(req.body.payment_details.expiry_year),
+            cvc: req.body.payment_details.cvc_number,
+            name: req.body.payment_details.credit_card_first_name + ' ' + req.body.payment_details.credit_card_last_name,
+        }
+        //console.log(CardDetails);
+        //return;
+
+    // Create a Card Token	
+    stripe.tokens.create({
+            card: {
+                number: req.body.payment_details.credit_card_number,
+                exp_month: parseInt(req.body.payment_details.expiry_month),
+                exp_year: parseInt(req.body.payment_details.expiry_year),
+                cvc: req.body.payment_details.cvc_number,
+                name: req.body.payment_details.credit_card_first_name + ' ' + req.body.payment_details.credit_card_last_name,
+            },
+        },
+        async function(err, token) {
+            if (err) {
+                handleStripeError(err, res)
+            } // Car Token Error
+            if (token) {
+                //console.log(token);
+                if (isEmpty(existingUser.stripe_customer_id)) { // if new customer
+                    userData = { 'first_name': existingUser.first_name, 'last_name': existingUser.last_name, 'email': existingUser.email, 'description': 'Adding Parent as a Customer.', 'token': token.id, 'id': req.body.userID, 'user_type': 'parent' }
+
+                    saveCustomer = await saveNewCustomer(userData, res); // Save New Customer
+                    //console.log(saveCustomer);
+
+                    if (saveCustomer.id) {
+                        cardData = { 'customer_id': saveCustomer.id, 'token': token.id };
+                        cardResponse = await saveNewCard(cardData, res); // save New Card
+                        if (cardResponse.id) {
+
+
+                            PaymentDetailsArray = [];
+                            PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month }); // automcatically set default to true
+
+                            // Update Mentor Customer Id and Payment Details
+                            existingUser.stripe_customer_id = saveCustomer.id;
+                            existingUser.payment_details = PaymentDetailsArray;
+                            existingUser.save(function(err, user) {
+                                if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                                // todo: don't forget to handle err
+
+                                return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
+                            });
+
+
+
+                        }
+                    }
+
+
+
+                } else {
+
+                    cardData = { 'customer_id': existingUser.stripe_customer_id, 'token': token.id };
+
+                    cardResponse = await saveNewCard(cardData, res); // Save New Card Details on Stripe
+                    //console.log('cardResponse', cardResponse);
+                    if (cardResponse.id) {
+
+                        // Save Payment Details in DB
+                        if (isEmpty(existingUser.payment_details)) {
+
+
+                            PaymentDetailsArray = [];
+                            PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month }); //automatically set default to true
+
+
+                        } else {
+
+                            PaymentDetailsArray = existingUser.payment_details;
+
+                            // check new default card request recieved
+                            if (req.body.payment_details.default_card) {
+
+                                // check if there is any previous default card method available 
+                                let getPreviousDefaultCard = PaymentDetailsArray.filter((l) => l.default).map((l) => l);
+
+                                if (getPreviousDefaultCard) {
+                                    // update All Previous Default Method to false				
+                                    for (var x = 0; x < PaymentDetailsArray.length; x++) {
+                                        PaymentDetailsArray[x].default = false;
+                                    }
+
+                                }
+
+
+                                // Update Customer Stripe API to set New Default Payment Method
+                                cardData = { 'customer_id': existingUser.stripe_customer_id, 'id': cardResponse.id };
+                                await updateCustomerDefaultPaymentMethod(cardData, res);
+                            }
+
+
+                            PaymentDetailsArray.push({ 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': req.body.payment_details.default_card, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month });
+
+                        }
+
+
+                        // Update Payment Details Array
+                        existingUser.payment_details = PaymentDetailsArray;
+                        existingUser.save(function(err, user) {
+                            if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                            // todo: don't forget to handle err
+
+                            return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
+                        });
+                    }
+
+
+                }
+
+            } //if Token
+
+        }); // Create Card Token
+
+}
+
+exports.getSavedPaymentMethod = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['payment_details']));
+
+}
+
+function handleStripeError(err, res) {
+    switch (err.type) {
+        case 'StripeCardError':
+            // A declined card error => e.g. "Your card's expiration year is invalid."
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': err.message });
+            break;
+        case 'StripeRateLimitError':
+            // Too many requests made to the API too quickly
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Too many requests hit the API too quickly." });
+            break;
+        case 'StripeInvalidRequestError':
+            // Invalid parameters were supplied to Stripe's API
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Invalid parameters were supplied to API" });
+            break;
+        case 'StripeAPIError':
+            // An error occurred internally with Stripe's API
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "An error occurred internally with API" });
+            break;
+        case 'StripeConnectionError':
+            // Some kind of error occurred during the HTTPS communication
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Some kind of error occurred during the HTTPS communication" });
+            break;
+        case 'StripeAuthenticationError':
+            // You probably used an incorrect API key
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Unable to add your card for some unknown reason. Please try again later." });
+            break;
+        default:
+            // Handle any other types of unexpected errors
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Unable to process your request for some unknown reason. Please try again later." });
+            break;
+    }
+    exit;
+}
+
+function updateCustomerDefaultPaymentMethod(cardData, res) {
+    return new Promise(function(resolve, reject) {
+        return stripe.customers.update(
+            cardData.customer_id, { invoice_settings: { default_payment_method: cardData.id } },
+            function(err, customer) {
+                if (err) { reject(handleStripeError(err, res)) } // Create Card Error
+                resolve(customer); // Customer Default Payment Method Successfully Updated.
+            });
+    });
+}
+
+function createSubscription(subscriptionData, res) {
+    // create a subscription 
+    return new Promise(function(resolve, reject) {
+        return stripe.subscriptions.create({
+                customer: subscriptionData.customer_id,
+                items: [
+                    { price: subscriptionData.price_id, },
+                ]
+            },
+            function(err, subscription) {
+                // asynchronously called
+                if (err) {
+                    //console.log(err);
+                    reject(handleStripeError(err, res))
+                } // Handle Customer Error
+
+                resolve(subscription); // If Customer Successfully created
+
+            });
+    });
+
+}
+
+function saveNewCustomer(userData, res) {
+    // create a customer 
+    return new Promise(function(resolve, reject) {
+        return stripe.customers.create({
+                description: userData.description,
+                name: userData.first_name + ' ' + userData.last_name,
+                email: userData.email
+            },
+            function(err, customer) {
+                // asynchronously called
+                if (err) {
+                    //console.log('HEllo World 1');
+                    reject(handleStripeError(err, res))
+                } // Handle Customer Error
+
+                resolve(customer); // If Customer Successfully created
+
+            });
+    });
+
+}
+
+function isEmpty(obj) {
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
+function saveNewCard(cardData, res) {
+    return new Promise(function(resolve, reject) {
+        // Create a Card Stripe API
+        return stripe.customers.createSource(
+            cardData.customer_id, {
+                source: cardData.token,
+            },
+            function(err, card) {
+                if (err) {
+                    //console.log(err);
+                    //console.log('HEllo World2');
+                    reject(handleStripeError(err, res))
+                } // Handle Card Error
+                //console.log(card);
+                // update default payment method using Stripe API					
+                resolve(card);
+            });
+
+
+    });
+}
+
+
+exports.checkBillingMethodExists = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID }, { stripe_customer_id: 1 });
+    console.log(existingUser)
+
+    if (existingUser.stripe_customer_id == '') {
+        return res.status(400).send(req.polyglot.t('ADD-YOUR-BILLING-METHOD'))
+    } else {
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+    }
+}
+
 async function sendEmail(to, subject, message) {
     const transporter = await nodemailer.createTransport({
         host: config.get('nodemailer.host'),

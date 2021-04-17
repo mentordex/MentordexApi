@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, uploadFile, deleteObject, testMail, updateNotes } = require('../controller/auth.controller')
+const { login, signup, forgotPassword, userProfileData, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, updateProfileHourlyRateDetails, updateProfileAchievementDetails, updateProfileSocialLinksDetails, buySubscription, addYourPaymentMethod, getSavedPaymentMethod, getMentorProfileDetailsById, uploadFile, deleteObject, testMail, updateNotes } = require('../controller/auth.controller')
 
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
@@ -58,14 +58,24 @@ module.exports = router => {
     router.post("/api/updateSkillsDetails", [validator('updateSkillsDetails')], procErr, updateSkillsDetails)
     router.post("/api/updateBookASlotDetails", [validator('updateBookASlotDetails')], procErr, updateBookASlotDetails)
     router.post("/api/updateProfileBasicDetails", [validator('updateProfileBasicDetails')], procErr, updateProfileBasicDetails)
-
-
+    router.post("/api/updateProfileAchievementDetails", [validator('updateProfileAchievementDetails')], procErr, updateProfileAchievementDetails)
 
     router.post("/api/updateProfileAcademicHistoryDetails", [validator('updateProfileAcademicHistoryDetails')], procErr, updateProfileAcademicHistoryDetails)
 
 
     router.post("/api/updateProfileEmploymentHistoryDetails", [validator('updateProfileEmploymentHistoryDetails')], procErr, updateProfileEmploymentHistoryDetails)
 
+    router.post("/api/updateProfileHourlyRateDetails", [validator('updateProfileHourlyRateDetails')], procErr, updateProfileHourlyRateDetails)
+
+    router.post("/api/updateProfileSocialLinksDetails", [validator('updateProfileSocialLinksDetails')], procErr, updateProfileSocialLinksDetails)
+
+    router.post("/api/buySubscription", [validator('buySubscription')], procErr, buySubscription)
+
+    router.post("/api/addYourPaymentMethod", [validator('addYourPaymentMethod')], procErr, addYourPaymentMethod)
+
+    router.post("/api/getSavedPaymentMethod", [validator('getSavedPaymentMethod')], procErr, getSavedPaymentMethod)
+
+    router.post("/api/getMentorProfileDetailsById", [validator('getMentorProfileDetailsById')], procErr, getMentorProfileDetailsById)
 
     router.post("/api/uploadFile", procErr, uploadFile)
     router.post("/api/deleteObject", procErr, deleteObject)
