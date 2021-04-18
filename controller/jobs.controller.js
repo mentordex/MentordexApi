@@ -115,13 +115,13 @@ exports.newBookingRequest = async(req, res) => {
     const { job_title, job_description, category_id, subcategory_id, parent_id, mentor_id, booking_time, hourly_rate, booking_date } = req.body
 
     //save Jobs 
-    newJobs = new Jobs(_.pick(req.body, ['job_title', 'job_description', 'category_id', 'subcategory_id', 'parent_id', 'mentor_id', 'booking_time', 'hourly_rate', 'booking_date', 'job_status', 'job_active', 'created_at', 'modified_at']));
+    newJobs = new Jobs(_.pick(req.body, ['job_title', 'job_description', 'category_id', 'subcategory_id', 'job_file', 'parent_id', 'mentor_id', 'booking_time', 'hourly_rate', 'booking_date', 'job_status', 'job_active', 'created_at', 'modified_at']));
 
-    newJobs.save(async function(err, type) {
+    newJobs.save(async function(err, newJob) {
 
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(type);
+        return res.status(responseCode.CODES.SUCCESS.OK).send(newJob);
 
     });
 

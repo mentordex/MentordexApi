@@ -131,7 +131,8 @@ var userSchema = new mongoose.Schema({
         type: String,
     },
     hourly_rate: {
-        type: String,
+        type: Number,
+        default: 0
     },
     appointment_date: {
         type: String,
@@ -294,6 +295,19 @@ var userSchema = new mongoose.Schema({
         ref: 'City',
     },
     zipcode: {
+        type: String
+    },
+    rating: {
+        type: Number,
+        default: 0
+    },
+    country_value: {
+        type: String
+    },
+    state_value: {
+        type: String
+    },
+    city_value: {
         type: String
     },
     category_id1: {

@@ -5,6 +5,8 @@ const { Dashboard } = require('../schema/dashboard');
 const { Contact } = require('../schema/contact');
 const { Office } = require('../schema/office');
 const { Team } = require('../schema/team');
+const { Category } = require('../schema/category');
+const { Subcategory } = require('../schema/subcategory');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
@@ -692,6 +694,7 @@ exports.getMentorProfileDetails = async(req, res) => {
 exports.getMentorProfileDetailsById = async(req, res) => {
 
     let condition = {};
+    let subcategoryArray = [];
 
 
     // If no validation errors, get the req.body objects that were validated and are needed
@@ -703,54 +706,60 @@ exports.getMentorProfileDetailsById = async(req, res) => {
     let existingUser = await User.findOne({ _id: userID });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
-    /*
-        condition['_id'] = mentorId;
-        User.aggregate([{
-                $match: condition
-            },
-            {
 
-                "$lookup": {
-                    from: "subcategories",
-                    localField: "_id",
-                    foreignField: "subcategory_id1",
-                    as: "subcategory",
-                }
-            },
-            {
-                $project: {
-                    'academics': 1,
-                    'achievements': 1,
-                    'employments': 1,
-                    'profile_image': 1,
-                    'introduction_video': 1,
-                    'tagline': 1,
-                    'servicable_zipcodes': 1,
-                    'bio': 1,
-                    'hourly_rate': 1,
-                    'website': 1,
-                    'first_name': 1,
-                    'last_name': 1,
-                    'primary_language': 1,
-                    'last_name': 1,
-                    'last_name': 1,
-                    'subcategory.title': 1,
-                },
+    condition['_id'] = mongoose.Types.ObjectId(mentorId);
+    User.aggregate([{
+            $match: condition
+        },
+        {
+
+            "$lookup": {
+                from: "categories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category",
             }
-        ], function(err, profileDetails) {
+        },
+        {
+            $project: {
+                'category_id': 1,
+                'academics': 1,
+                'achievements': 1,
+                'employments': 1,
+                'profile_image': 1,
+                'introduction_video': 1,
+                'tagline': 1,
+                'servicable_zipcodes': 1,
+                'bio': 1,
+                'hourly_rate': 1,
+                'website': 1,
+                'first_name': 1,
+                'last_name': 1,
+                'primary_language': 1,
+                'first_name': 1,
+                'subcategories': 1,
+                'city_value': 1,
+                'rating': 1,
+                'country_value': 1,
+                'state_value': 1,
+                'letter_of_recommendation': 1,
+                'category.title': 1
+            },
+        },
+        { $unwind: "$category" }
+    ], function(err, profileDetails) {
+        //if (err) { console.log(err) }
+        //console.log(profileDetails)
+        //let data = {records: profileDetails}
+        return res.status(responseCode.CODES.SUCCESS.OK).send(profileDetails[0]);
+    })
 
-            let data = {
-                records: profileDetails,
-
-            }
-            return res.status(responseCode.CODES.SUCCESS.OK).send(data);
-        })
-        */
 
 
-    let fetchMentorProfile = await User.findOne({ _id: mentorId });
+    //let fetchMentorProfile = await User.findOne({ _id: mentorId });
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(fetchMentorProfile, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'first_name', 'last_name', 'primary_language']));
+
+    //return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(fetchMentorProfile, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'first_name', 'last_name', 'primary_language', 'subcategories']));
 
 }
 
@@ -1710,6 +1719,190 @@ exports.checkBillingMethodExists = async(req, res) => {
     } else {
         return res.status(responseCode.CODES.SUCCESS.OK).send(true);
     }
+}
+
+exports.search = async(req, res) => {
+
+
+
+    const { size, pageNumber, sort_dir, sort_by } = req.body
+    let condition = {};
+    let andcondition = []
+    let sortBy = {}
+    sortBy[sort_by] = (sort_dir == 'asc') ? -1 : 1
+    condition['role'] = 'MENTOR'
+    condition['stripe_customer_id'] = { "$nin": [null, ""] }
+    condition['admin_status'] = 'APPROVED'
+    if (_.has(req.body.filters, ['category']) && (req.body.filters['category']).length > 0) {
+        condition['category_id'] = mongoose.Types.ObjectId(req.body.filters['category'])
+    }
+
+
+    if (_.has(req.body.filters, ['hourly_rate'])) {
+        condition['hourly_rate'] = { $gte: req.body.filters.hourly_rate['min'], $lte: req.body.filters.hourly_rate['max'] }
+    }
+
+    if (_.has(req.body.filters, ['rating']) && req.body.filters['rating'] != 'Any') {
+        condition['rating'] = { $gte: req.body.filters['rating'] }
+    }
+    if (_.has(req.body.filters, ['subcategory']) && (req.body.filters['subcategory']).length > 0) {
+
+        andcondition.push({
+            $or: [
+                { subcategory_id1: mongoose.Types.ObjectId(req.body.filters['subcategory']) },
+                { subcategory_id2: mongoose.Types.ObjectId(req.body.filters['subcategory']) },
+                { subcategory_id3: mongoose.Types.ObjectId(req.body.filters['subcategory']) }
+            ]
+        })
+    }
+
+    if (_.has(req.body.filters, ['location']) && (req.body.filters['location']).length > 0) {
+
+
+        andcondition.push({
+            $or: [
+                { servicable_zipcodes: { $elemMatch: { "value": { $regex: req.body.filters['location'], $options: 'i' }, "__isValid": true } } },
+                { zipcode: { $regex: req.body.filters['location'], $options: 'i' } },
+                { address1: { $regex: req.body.filters['location'], $options: 'i' } },
+                { address2: { $regex: req.body.filters['location'], $options: 'i' } },
+                { country_value: { $regex: req.body.filters['location'], $options: 'i' } },
+                { state_value: { $regex: req.body.filters['location'], $options: 'i' } },
+                { city_value: { $regex: req.body.filters['location'], $options: 'i' } }
+            ]
+        })
+    }
+
+    if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
+        andcondition.push({
+            $or: [
+                { first_name: { $regex: req.body['search'], $options: 'i' } },
+                { last_name: { $regex: req.body['search'], $options: 'i' } },
+                { tagline: { $regex: req.body['search'], $options: 'i' } },
+                { bio: { $regex: req.body['search'], $options: 'i' } }
+            ]
+        })
+
+    }
+
+
+    if (andcondition.length > 0) {
+        //andcondition['$and'] = andcondition
+        condition['$and'] = andcondition
+    }
+    let totalRecords = await User.count(condition);
+
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+
+    User.aggregate([{
+            $match: condition
+        },
+        {
+
+            "$lookup": {
+                from: "states",
+                localField: "state_id",
+                foreignField: "_id",
+                as: "state",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "cities",
+                localField: "city_id",
+                foreignField: "_id",
+                as: "city",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "categories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id1",
+                foreignField: "_id",
+                as: "subcategory1",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id2",
+                foreignField: "_id",
+                as: "subcategory2",
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id3",
+                foreignField: "_id",
+                as: "subcategory3",
+            }
+        },
+        {
+            $project: {
+                first_name: 1,
+                last_name: 1,
+                bio: 1,
+                tagline: 1,
+                profile_image: 1,
+                hourly_rate: 1,
+                created_at: 1,
+                rating: 1,
+                servicable_zipcodes: 1,
+                'category.title': 1,
+                'country.title': 1,
+                'state.title': 1,
+                'city.title': 1,
+                'subcategory1.title': 1,
+                'subcategory2.title': 1,
+                'subcategory3.title': 1
+            },
+        },
+        { $sort: sortBy },
+        { $skip: skip },
+        { $limit: limit }
+
+
+
+
+    ], function(err, members) {
+
+        let data = {
+            records: members,
+            total_records: totalRecords,
+            condition: condition,
+            andcondition: andcondition,
+            sortBy: sortBy,
+            err: err
+
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+    })
+
+}
+
+exports.subcategoryListing = async(req, res) => {
+    let condition = {}
+    if (_.has(req.body, ['category_id']) && (req.body['category_id']).length > 0) {
+        condition['category_id'] = mongoose.Types.ObjectId(req.body['category_id'])
+    }
+    return res.status(responseCode.CODES.SUCCESS.OK).send(await Subcategory.find(condition));
+
 }
 
 async function sendEmail(to, subject, message) {

@@ -42,6 +42,28 @@ var jobSchema = new mongoose.Schema({
         enum: ['NEW', 'APPROVED', 'REJECTED', 'PENDING'],
         default: 'PENDING'
     },
+    job_file: [{
+        file_path: {
+            type: String,
+            trim: true
+        },
+        file_name: {
+            type: String,
+            trim: true
+        },
+        file_key: {
+            type: String,
+            trim: true
+        },
+        file_mimetype: {
+            type: String,
+            trim: true
+        },
+        file_category: {
+            type: String,
+            trim: true
+        }
+    }],
     job_active: {
         type: Boolean,
         enum: [true, false],

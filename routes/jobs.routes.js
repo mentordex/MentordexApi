@@ -1,5 +1,5 @@
 const { procErr } = require('../utilities/processErrors')
-const { add, listing, deleteJobs, changeStatus } = require('../controller/jobs.controller')
+const { add, listing, deleteJobs, changeStatus, newBookingRequest } = require('../controller/jobs.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -12,6 +12,6 @@ module.exports = router => {
 
     router.post("/api/jobs/deleteJobs", procErr, deleteJobs)
     router.post("/api/jobs/changeStatus", procErr, changeStatus)
-
+    router.post("/api/jobs/newBookingRequest", procErr, newBookingRequest)
 
 }
