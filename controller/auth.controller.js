@@ -73,7 +73,7 @@ exports.login = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email, password } = req.body
 
-    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1 });
+    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1 });
 
     if (!user) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-NOT-EXIST'));
 
@@ -203,6 +203,12 @@ exports.updateParentInfo = async(req, res) => {
     if ('subcategory_id3' in req.body && (req.body.subcategory_id3).length > 0) {
         userInfo['subcategory_id3'] = req.body.subcategory_id3
     }
+    if ('state' in req.body && (req.body.state).length > 0) {
+        userInfo['state'] = req.body.state
+    }
+    if ('city' in req.body && (req.body.city).length > 0) {
+        userInfo['city'] = req.body.city
+    }
 
 
     await User.findOneAndUpdate({ _id: user_id }, { $set: userInfo }, { new: true })
@@ -278,14 +284,14 @@ exports.signup = async(req, res) => {
 
 
     //save user 
-    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'created_at', 'modified_at', 'admin_status']));
+    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
 
 
 
     newUser.save(async function(err, user) {
 
         if (err) {
-            console.log(err);
+            //console.log(err);
             return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         }
 
@@ -324,7 +330,7 @@ exports.signup = async(req, res) => {
 
         } else {
             // IF Role = PARENT
-            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE' } }, { new: true })
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE', admin_status: 'APPROVED' } }, { new: true })
 
             res.setHeader('x-mentordex-auth-token', token);
             res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
@@ -659,6 +665,22 @@ exports.memberListing = async(req, res) => {
 
 }
 
+/* get Parent Function */
+exports.getParentDetails = async(req, res) => {
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'subcategory_id1', 'subcategory_id2', 'subcategory_id3']));
+
+}
+
 /* Mentor Functions */
 
 exports.getMentorDetails = async(req, res) => {
@@ -762,6 +784,51 @@ exports.getMentorProfileDetailsById = async(req, res) => {
     //return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(fetchMentorProfile, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'first_name', 'last_name', 'primary_language', 'subcategories']));
 
 }
+
+exports.getMentorSlotsByDate = async(req, res) => {
+
+    let condition = {};
+    let availableSlots = [];
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, mentorId, getSelectedDate } = req.body
+
+    //console.log(req.body);
+
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+
+    condition['_id'] = mongoose.Types.ObjectId(mentorId);
+    condition['availability.date'] = getSelectedDate;
+
+    let getMentorSlots = await User.findOne(condition);
+
+    //console.log(getMentorSlots);
+
+    if (getMentorSlots != null) {
+        //console.log(getMentorSlots.availability);
+
+
+        availableSlots = getMentorSlots.availability.filter(function(el) {
+            return el.date == getSelectedDate;
+        });
+
+        console.log('availableSlots', availableSlots[0].slots)
+        return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots[0].slots });
+    } else {
+        return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots });
+    }
+
+
+
+
+
+}
+
 
 exports.resendMentorPhoneVerification = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
@@ -915,7 +982,7 @@ exports.updateBasicDetails = async(req, res) => {
     //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
 
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, gender, primary_language, dob, address1, address2, country_id, state_id, city_id, zipcode, social_links } = req.body
+    const { userID, gender, primary_language, dob, address1, address2, country, state, city, country_id, state_id, city_id, zipcode, social_links } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
@@ -927,6 +994,9 @@ exports.updateBasicDetails = async(req, res) => {
     existingUser.dob = dob;
     existingUser.address1 = address1
     existingUser.address2 = address2
+    existingUser.country = country
+    existingUser.state = state
+    existingUser.city = city
     existingUser.country_id = country_id
     existingUser.state_id = state_id
     existingUser.city_id = city_id
@@ -947,22 +1017,22 @@ exports.updateSkillsDetails = async(req, res) => {
     //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
 
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, category_id, subcategories, subcategory_id1, subcategory_id2, subcategory_id3 } = req.body
+    const { userID, category1, category2, category3, subcategory1, subcategory2, subcategory3 } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    existingUser.category_id = category_id;
-    existingUser.subcategories = subcategories;
-    existingUser.subcategory_id1 = subcategory_id1;
-    existingUser.subcategory_id2 = subcategory_id2;
-    existingUser.subcategory_id3 = subcategory_id3;
+    existingUser.category1 = category1;
+    existingUser.category2 = category2;
+    existingUser.category3 = category3;
+    existingUser.subcategory1 = subcategory1;
+    existingUser.subcategory2 = subcategory2;
+    existingUser.subcategory3 = subcategory3;
     existingUser.save(function(err, user) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
-
         return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
     });
 
@@ -1104,7 +1174,7 @@ exports.updateProfileHourlyRateDetails = async(req, res) => {
     //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
 
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, hourly_rate } = req.body
+    const { userID, hourly_rate, availability } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
@@ -1112,6 +1182,7 @@ exports.updateProfileHourlyRateDetails = async(req, res) => {
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     existingUser.hourly_rate = hourly_rate;
+    existingUser.availability = availability;
     existingUser.save(function(err, user) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
@@ -1433,7 +1504,7 @@ exports.buySubscription = async(req, res) => {
 
 exports.addYourPaymentMethod = async(req, res) => {
 
-    console.log(req.body);
+    //console.log(req.body);
 
     //checking unique email
     let existingUser = await User.findOne({ _id: req.body.userID });
@@ -1584,6 +1655,55 @@ exports.getSavedPaymentMethod = async(req, res) => {
 
 }
 
+exports.getMentorMembershipDetails = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    userData = { 'stripe_subscription_id': existingUser.subscription_id }
+
+    saveCustomer = await getCustomerDetails(userData, res); // Save New Customer
+    console.log(saveCustomer);
+
+
+
+}
+
+exports.cancelYourSubscription = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    userData = { 'stripe_subscription_id': existingUser.subscription_id }
+
+    cancelCustomerSubscription = await cancelSubscription(userData, res); // Save New Customer
+    console.log(cancelCustomerSubscription);
+
+    if (cancelCustomerSubscription.status == 'canceled') {
+        // Update Payment Details Array
+        existingUser.subscription_status = 'CANCELLED';
+        existingUser.save(function(err, user) {
+            if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+            // todo: don't forget to handle err
+
+            return res.status(responseCode.CODES.SUCCESS.OK).send(req.polyglot.t('SUBSCRIPTION-CANCELLED-SUCCESS'));
+        });
+    } else {
+        return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(req.polyglot.t('SUBSCRIPTION-CANCELLED-FAILED'));
+    }
+
+}
+
 function handleStripeError(err, res) {
     switch (err.type) {
         case 'StripeCardError':
@@ -1672,6 +1792,39 @@ function saveNewCustomer(userData, res) {
             });
     });
 
+}
+
+function getCustomerDetails(userData, res) {
+    // get a customer details 
+    return new Promise(function(resolve, reject) {
+        return stripe.subscriptions.retrieve(userData.stripe_subscription_id,
+            function(err, customer) {
+                // asynchronously called
+                if (err) {
+                    //console.log('HEllo World 1');
+                    reject(handleStripeError(err, res))
+                } // Handle Customer Error
+
+                resolve(customer); // If Customer Details Fetched
+
+            });
+    });
+}
+
+function cancelSubscription(userData, res) {
+    // cancel a subscription 
+    return new Promise(function(resolve, reject) {
+        return stripe.subscriptions.del(userData.stripe_subscription_id,
+            function(err, subscription) {
+                // asynchronously called
+                if (err) {
+                    reject(handleStripeError(err, res))
+                } // Handle Subscription Error
+
+                resolve(subscription); // If Subscription Successfully cancelled
+
+            });
+    });
 }
 
 function isEmpty(obj) {

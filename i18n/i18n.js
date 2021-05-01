@@ -40,6 +40,8 @@ exports.messages = {
         'emailIsEmail': "This is not a valid email address.",
         'passwordRequiredField': "'password' is a required field.",
         'ADD-YOUR-BILLING-METHOD': "Add your billing method to send booking request to mentor.",
+        'SUBSCRIPTION-CANCELLED-FAILED': "Failed to cancel your subscription. Please try again in some time.",
+        'SUBSCRIPTION-CANCELLED-SUCCESS': "Your subscription has been cancelled successfully.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",

@@ -86,6 +86,16 @@ exports.validator = functionName => {
                     .exists().withMessage('passwordRequiredField')
                 ]
             }
+            // Parent Functions        
+        case 'getParentDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+
             // Mentor Functions        
         case 'getMentorDetails':
             {
@@ -216,7 +226,34 @@ exports.validator = functionName => {
                 ]
             }
 
+        case 'getMentorMembershipDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'cancelYourSubscription':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
         case 'getMentorProfileDetailsById':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED'),
+
+                    check('mentorId')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'getMentorSlotsByDate':
             {
                 return [
                     check('userID')

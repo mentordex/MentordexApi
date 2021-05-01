@@ -271,6 +271,22 @@ var userSchema = new mongoose.Schema({
             trim: true
         }
     }],
+    availability: [{
+        date: {
+            type: String,
+            trim: true
+        },
+        slots: [{
+            value: {
+                type: String,
+                trim: true
+            },
+            isChecked: {
+                type: Boolean,
+                default: false
+            }
+        }]
+    }],
     category_id: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
@@ -281,6 +297,36 @@ var userSchema = new mongoose.Schema({
     },
     address2: {
         type: String,
+    },
+    country: {
+        country_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Country',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    state: {
+        state_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'State',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    city: {
+        city_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'City',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
     },
     country_id: {
         type: Schema.Types.ObjectId,
@@ -309,6 +355,66 @@ var userSchema = new mongoose.Schema({
     },
     city_value: {
         type: String
+    },
+    category1: {
+        category_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Category',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    category2: {
+        category_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Category',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    category3: {
+        category_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Category',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    subcategory1: {
+        subcategory_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Subcategory',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    subcategory2: {
+        subcategory_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Subcategory',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
+    },
+    subcategory3: {
+        subcategory_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Subcategory',
+        },
+        value: {
+            type: String,
+            trim: true
+        }
     },
     category_id1: {
         type: Schema.Types.ObjectId,
@@ -402,6 +508,11 @@ var userSchema = new mongoose.Schema({
         //unique: true,
         trim: true
     },
+    subscription_status: {
+        type: String,
+        enum: ['ACTIVE', 'CANCELLED', 'FAILED', 'IN-ACTIVE'],
+        default: 'IN-ACTIVE'
+    },
     price_id: {
         type: String,
         //unique: true,
@@ -449,6 +560,10 @@ var userSchema = new mongoose.Schema({
         type: String,
         enum: ['NEW', 'APPROVED', 'RESCHEDULED', 'IN-PROCESS', 'REJECTED', 'PENDING'],
         default: 'PENDING'
+    },
+    newsletter: {
+        type: Boolean,
+        default: false
     },
     notes: [],
 
