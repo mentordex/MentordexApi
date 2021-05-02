@@ -518,6 +518,10 @@ var userSchema = new mongoose.Schema({
         //unique: true,
         trim: true
     },
+    membership_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Membership',
+    },
     role: {
         type: String,
         enum: ['PARENT', 'MENTOR'],

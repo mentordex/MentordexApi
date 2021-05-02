@@ -7,6 +7,7 @@ const { Office } = require('../schema/office');
 const { Team } = require('../schema/team');
 const { Category } = require('../schema/category');
 const { Subcategory } = require('../schema/subcategory');
+const { Transactions } = require('../schema/transactions');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
@@ -185,23 +186,23 @@ exports.updateParentInfo = async(req, res) => {
     if ('zipcode' in req.body && (req.body.zipcode).length > 0) {
         userInfo['zipcode'] = req.body.zipcode
     }
-    if ('category_id1' in req.body && (req.body.category_id1).length > 0) {
-        userInfo['category_id1'] = req.body.category_id1
+    if ('category1' in req.body && (req.body.category1).length > 0) {
+        userInfo['category1'] = req.body.category1
     }
-    if ('subcategory_id1' in req.body && (req.body.subcategory_id1).length > 0) {
-        userInfo['subcategory_id1'] = req.body.subcategory_id1
+    if ('category2' in req.body && (req.body.category2).length > 0) {
+        userInfo['category2'] = req.body.category2
     }
-    if ('category_id2' in req.body && (req.body.category_id2).length > 0) {
-        userInfo['category_id2'] = req.body.category_id2
+    if ('category3' in req.body && (req.body.category3).length > 0) {
+        userInfo['category3'] = req.body.category3
     }
-    if ('subcategory_id2' in req.body && (req.body.subcategory_id2).length > 0) {
-        userInfo['subcategory_id2'] = req.body.subcategory_id2
+    if ('subcategory1' in req.body && (req.body.subcategory1).length > 0) {
+        userInfo['subcategory1'] = req.body.subcategory1
     }
-    if ('category_id3' in req.body && (req.body.category_id3).length > 0) {
-        userInfo['category_id3'] = req.body.category_id3
+    if ('subcategory2' in req.body && (req.body.subcategory2).length > 0) {
+        userInfo['subcategory2'] = req.body.subcategory2
     }
-    if ('subcategory_id3' in req.body && (req.body.subcategory_id3).length > 0) {
-        userInfo['subcategory_id3'] = req.body.subcategory_id3
+    if ('subcategory3' in req.body && (req.body.subcategory3).length > 0) {
+        userInfo['subcategory3'] = req.body.subcategory3
     }
     if ('state' in req.body && (req.body.state).length > 0) {
         userInfo['state'] = req.body.state
@@ -1340,18 +1341,12 @@ exports.testMail = async(req, res) => {
 
 exports.buySubscription = async(req, res) => {
 
-    // If no validation errors, get the req.body objects that were validated and are needed
-    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
-
-    // If no validation errors, get the req.body objects that were validated and are needed
-    //const { userID, priceId } = req.body
-
-    //checking unique email
     let existingUser = await User.findOne({ _id: req.body.userID });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     let PaymentDetailsArray = [];
+    let transactionArray = [];
     let userData = {};
     let cardData = {};
     let subscriptionData = {};
@@ -1408,11 +1403,26 @@ exports.buySubscription = async(req, res) => {
                                 existingUser.stripe_customer_id = saveCustomer.id;
                                 existingUser.subscription_id = saveSubscription.id;
                                 existingUser.price_id = req.body.priceId;
+                                existingUser.membership_id = req.body.membershipId;
                                 existingUser.payment_details = PaymentDetailsArray;
                                 existingUser.billing_details = req.body.billing_details;
                                 existingUser.save(function(err, user) {
                                     if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
                                     // todo: don't forget to handle err
+
+                                    // Save New Transaction
+
+                                    transactionArray['transaction_type'] = 'Subscription'
+                                    transactionArray['user_id'] = req.body.userID
+                                    transactionArray['price_id'] = req.body.priceId
+                                    transactionArray['invoice_id'] = saveSubscription.latest_invoice;
+                                    transactionArray['payment_details'] = { 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month };
+
+                                    transactionArray['user_type'] = 'MENTOR'
+
+                                    let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+
+                                    newTransaction.save(async function(err, record) {});
 
                                     return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
                                 });
@@ -1477,12 +1487,25 @@ exports.buySubscription = async(req, res) => {
                             // Update Payment Details Array
                             existingUser.payment_details = PaymentDetailsArray;
                             existingUser.subscription_id = saveSubscription.id;
-                            //existingUser.invoice_id = saveSubscription.latest_invoice;
+                            existingUser.membership_id = req.body.membershipId;
                             existingUser.price_id = req.body.priceId;
                             existingUser.billing_details = req.body.billing_details;
                             existingUser.save(function(err, user) {
                                 if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
                                 // todo: don't forget to handle err
+
+
+                                // Save New Transaction
+                                transactionArray['transaction_type'] = 'Subscription'
+                                transactionArray['user_id'] = req.body.userID
+                                transactionArray['price_id'] = req.body.priceId
+                                transactionArray['invoice_id'] = saveSubscription.latest_invoice;
+                                transactionArray['payment_details'] = { 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month };
+                                transactionArray['user_type'] = 'MENTOR'
+
+                                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+
+                                newTransaction.save(async function(err, record) {});
 
                                 return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Payment Method Added Successfully.' });
                             });
