@@ -1,7 +1,9 @@
 const _ = require('lodash');
 const { Jobs } = require('../schema/jobs');
+const { Notifications } = require('../schema/notifications');
 const responseCode = require('../utilities/responseCode');
 var mongoose = require('mongoose');
+
 
 /*
  * Here we would probably call the DB to confirm the user exists
@@ -111,6 +113,8 @@ exports.changeStatus = async(req, res) => {
 
 exports.newBookingRequest = async(req, res) => {
 
+    let notificationArray = [];
+
     // If no validation errors, get the req.body objects that were validated and are needed
     const { job_title, job_description, category_id, subcategory_id, parent_id, mentor_id, booking_time, hourly_rate, booking_date } = req.body
 
@@ -120,6 +124,19 @@ exports.newBookingRequest = async(req, res) => {
     newJobs.save(async function(err, newJob) {
 
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+
+        // Add New Notification
+        notificationArray['notification_type'] = 'BOOKING'
+        notificationArray['notification'] = req.polyglot.t('NEW-BOOKING-REQUEST')
+        notificationArray['job_id'] = newJob._id
+        notificationArray['user_id'] = req.body.userID
+        notificationArray['user_type'] = 'MENTOR'
+
+        let newNotification = new Notifications(_.pick(notificationArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+
+        newNotification.save(async function(err, record) {});
+
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(newJob);
 

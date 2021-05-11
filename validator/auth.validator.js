@@ -30,6 +30,15 @@ exports.validator = functionName => {
                 ]
             }
 
+        case 'checkGoogleLogin':
+            {
+                return [
+                    check('email')
+                    .exists().withMessage('emailRequiredField')
+                    .isEmail().withMessage('emailIsEmail')
+                ]
+            }
+
         case 'signup':
             {
                 return [
@@ -86,6 +95,14 @@ exports.validator = functionName => {
                     .exists().withMessage('passwordRequiredField')
                 ]
             }
+        case 'getUserDetails':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
             // Parent Functions        
         case 'getParentDetails':
             {
@@ -235,6 +252,21 @@ exports.validator = functionName => {
             }
 
         case 'cancelYourSubscription':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'defaultCard':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'removeCard':
             {
                 return [
                     check('userID')

@@ -58,6 +58,7 @@ require("./routes/banner.routes")(app)
 require("./routes/about.routes")(app)
 require("./routes/jobs.routes")(app)
 require("./routes/membership.routes")(app)
+require("./routes/review.routes")(app)
     //Interceptors
 
 module.exports = app;

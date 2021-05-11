@@ -8,6 +8,8 @@ const { Team } = require('../schema/team');
 const { Category } = require('../schema/category');
 const { Subcategory } = require('../schema/subcategory');
 const { Transactions } = require('../schema/transactions');
+const { Notifications } = require('../schema/notifications');
+const { Review } = require('../schema/review');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
@@ -74,7 +76,7 @@ exports.login = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email, password } = req.body
 
-    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1 });
+    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1, subscription_status: 1 });
 
     if (!user) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('EMAIL-NOT-EXIST'));
 
@@ -139,12 +141,13 @@ exports.login = async(req, res) => {
             res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
 
             if (user['is_active'] == 'IN-ACTIVE') {
+                //console.log(user);
 
-                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role, admin_status: user.admin_status });
+                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role, admin_status: user.admin_status, subscription_status: user.subscription_status });
 
             } else {
 
-                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role', 'admin_status']));
+                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role', 'admin_status', 'subscription_status']));
             }
         }
 
@@ -285,7 +288,7 @@ exports.signup = async(req, res) => {
 
 
     //save user 
-    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
+    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'googleLoginId', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
 
 
 
@@ -299,39 +302,52 @@ exports.signup = async(req, res) => {
         const token = await userObject.generateToken(user.salt_key); //generate AUTH token
 
         if (user.role == 'MENTOR') {
-
-            const email_token = await userObject.generateToken(user.salt_key); //generate token
             const phone_token = '0000';
 
-            const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
-                //console.log('token',token);
+            if (user.googleLoginId == '') {
+                const email_token = await userObject.generateToken(user.salt_key); //generate token
 
-            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
 
-            const msg = {
-                to: user.email,
-                from: config.get('sendgrid.from'),
-                templateId: templates['mentor_signup'],
-                dynamic_template_data: {
-                    name: user.first_name + ' ' + user.last_name,
-                    verify_link: verify_link,
-                    email: user.email
-                }
-            };
-            sgMail.send(msg, (error, result) => {
-                if (error) {
-                    console.log(error);
-                } else {
-                    console.log("That's wassup!");
-                }
-            });
+                const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
+                    //console.log('token',token);
+
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
+
+                const msg = {
+                    to: user.email,
+                    from: config.get('sendgrid.from'),
+                    templateId: templates['mentor_signup'],
+                    dynamic_template_data: {
+                        name: user.first_name + ' ' + user.last_name,
+                        verify_link: verify_link,
+                        email: user.email
+                    }
+                };
+                sgMail.send(msg, (error, result) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.log("That's wassup!");
+                    }
+                });
+
+
+            } else {
+
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { is_email_verified: 'VERIFIED', phone_token: phone_token } }, { new: true })
+            }
 
             return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
 
 
         } else {
             // IF Role = PARENT
-            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE', admin_status: 'APPROVED' } }, { new: true })
+            if (user.googleLoginId == '') {
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE', admin_status: 'APPROVED' } }, { new: true })
+            } else {
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE', admin_status: 'APPROVED', is_email_verified: 'VERIFIED' } }, { new: true })
+            }
+
 
             res.setHeader('x-mentordex-auth-token', token);
             res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
@@ -341,6 +357,75 @@ exports.signup = async(req, res) => {
         }
 
     });
+
+}
+
+
+/*
+ * Here we would probably call the DB to confirm the user exists
+ * Then validate if they're authorized to login
+ * Then confirm their password
+ * Create a JWT or a cookie
+ * And finally send it back if all's good
+ */
+exports.checkGoogleLogin = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { email } = req.body
+
+    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1, subscription_status: 1 });
+
+    if (user) {
+        const token = await userObject.generateToken(user.salt_key); //generate token
+        //console.log(user)
+        if (user.role == 'MENTOR') {
+            // If Phone not verified for mentor
+            if (user.is_phone_verified == 'NOT-VERIFIED') {
+                const phone_token = '0000';
+
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { phone_token: phone_token } }, { new: true })
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('VERIFY-PHONE'), verify_phone: false, _id: user._id });
+
+                //return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('VERIFY-PHONE'));
+            }
+            // If Phone not verified for mentor
+            else {
+
+                await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+
+                res.setHeader('x-mentordex-auth-token', token);
+                res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+                if (user['is_active'] == 'IN-ACTIVE') {
+                    //console.log(user);
+
+                    return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: user._id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.role, admin_status: user.admin_status, subscription_status: user.subscription_status });
+
+                } else {
+
+                    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role', 'admin_status', 'subscription_status']));
+                }
+            }
+
+
+        } else {
+            // IF ROLE = PARENT
+
+            if (user['is_active'] == 'IN-ACTIVE') return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('USER-NOT-ACTIVE'));
+
+            await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token } }, { new: true })
+
+            res.setHeader('x-mentordex-auth-token', token);
+            res.header('Access-Control-Expose-Headers', 'x-mentordex-auth-token')
+
+            return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+
+        }
+    } else {
+        return res.status(responseCode.CODES.SUCCESS.OK).send({ email: false });
+
+    }
 
 }
 
@@ -362,7 +447,7 @@ exports.checkEmailExists = async(req, res) => {
     if (existingUser) {
         return res.status(400).send(req.polyglot.t('EMAIL-EXIST'))
     } else {
-        return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
     }
 }
 
@@ -587,6 +672,25 @@ exports.teamListing = async(req, res) => {
 
 }
 
+exports.reviewListing = async(req, res) => {
+
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = 1
+    condition['is_active'] = true
+
+    let limit = 10
+
+
+    let records = await Review.find(condition).sort(sortBy).skip(0).limit(limit);
+
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(records);
+
+
+
+}
 
 exports.memberListing = async(req, res) => {
 
@@ -666,6 +770,21 @@ exports.memberListing = async(req, res) => {
 
 }
 
+exports.getUserDetails = async(req, res) => {
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'first_name', 'last_name', 'profile_image', 'subscription_status', 'admin_status']));
+
+}
+
 /* get Parent Function */
 exports.getParentDetails = async(req, res) => {
 
@@ -710,7 +829,7 @@ exports.getMentorProfileDetails = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'admin_status']));
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'country', 'state', 'city', 'category1', 'category2', 'category3', 'subcategory1', 'subcategory2', 'subcategory3', 'first_name', 'last_name', 'primary_language', 'rating', 'letter_of_recommendation', 'availability', 'academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'admin_status', 'subscription_status']));
 
 }
 
@@ -730,7 +849,7 @@ exports.getMentorProfileDetailsById = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    condition['_id'] = mongoose.Types.ObjectId(mentorId);
+    /*condition['_id'] = mongoose.Types.ObjectId(mentorId);
     User.aggregate([{
             $match: condition
         },
@@ -738,14 +857,14 @@ exports.getMentorProfileDetailsById = async(req, res) => {
 
             "$lookup": {
                 from: "categories",
-                localField: "category_id",
+                localField: "category_id1",
                 foreignField: "_id",
                 as: "category",
             }
         },
         {
             $project: {
-                'category_id': 1,
+                'category_id1': 1,
                 'academics': 1,
                 'achievements': 1,
                 'employments': 1,
@@ -760,7 +879,9 @@ exports.getMentorProfileDetailsById = async(req, res) => {
                 'last_name': 1,
                 'primary_language': 1,
                 'first_name': 1,
-                'subcategories': 1,
+                'subcategory_id1': 1,
+                'subcategory_id2': 1,
+                'subcategory_id3': 1,
                 'city_value': 1,
                 'rating': 1,
                 'country_value': 1,
@@ -776,13 +897,13 @@ exports.getMentorProfileDetailsById = async(req, res) => {
         //let data = {records: profileDetails}
         return res.status(responseCode.CODES.SUCCESS.OK).send(profileDetails[0]);
     })
+    */
+
+    let getMentorDetails = await User.findOne({ _id: mentorId });
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(getMentorDetails, ['_id', 'academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'country', 'state', 'city', 'category1', 'category2', 'category3', 'subcategory1', 'subcategory2', 'subcategory3', 'first_name', 'last_name', 'primary_language', 'rating', 'letter_of_recommendation', 'availability']));
 
 
-
-    //let fetchMentorProfile = await User.findOne({ _id: mentorId });
-
-
-    //return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(fetchMentorProfile, ['academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'first_name', 'last_name', 'primary_language', 'subcategories']));
 
 }
 
@@ -818,7 +939,7 @@ exports.getMentorSlotsByDate = async(req, res) => {
             return el.date == getSelectedDate;
         });
 
-        console.log('availableSlots', availableSlots[0].slots)
+        //console.log('availableSlots', availableSlots[0].slots)
         return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots[0].slots });
     } else {
         return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots });
@@ -1402,6 +1523,8 @@ exports.buySubscription = async(req, res) => {
                                 // Update Mentor Customer Id and Payment Details
                                 existingUser.stripe_customer_id = saveCustomer.id;
                                 existingUser.subscription_id = saveSubscription.id;
+                                existingUser.next_billing_date = saveSubscription.current_period_start;
+                                existingUser.subscription_status = 'ACTIVE';
                                 existingUser.price_id = req.body.priceId;
                                 existingUser.membership_id = req.body.membershipId;
                                 existingUser.payment_details = PaymentDetailsArray;
@@ -1487,6 +1610,8 @@ exports.buySubscription = async(req, res) => {
                             // Update Payment Details Array
                             existingUser.payment_details = PaymentDetailsArray;
                             existingUser.subscription_id = saveSubscription.id;
+                            existingUser.subscription_status = 'ACTIVE';
+                            existingUser.next_billing_date = saveSubscription.current_period_start;
                             existingUser.membership_id = req.body.membershipId;
                             existingUser.price_id = req.body.priceId;
                             existingUser.billing_details = req.body.billing_details;
@@ -1680,18 +1805,70 @@ exports.getSavedPaymentMethod = async(req, res) => {
 
 exports.getMentorMembershipDetails = async(req, res) => {
 
+
+    let condition = {};
+
+
     // If no validation errors, get the req.body objects that were validated and are needed
     const { userID } = req.body
+
+
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    userData = { 'stripe_subscription_id': existingUser.subscription_id }
+    condition['_id'] = mongoose.Types.ObjectId(userID);
+    User.aggregate([{
+            $match: condition
+        },
+        {
 
-    saveCustomer = await getCustomerDetails(userData, res); // Save New Customer
-    console.log(saveCustomer);
+            "$lookup": {
+                from: "memberships",
+                localField: "membership_id",
+                foreignField: "_id",
+                as: "membership",
+            }
+        },
+        {
+            $project: {
+                'next_billing_date': 1,
+                'subscription_status': 1,
+                'membership.price': 1,
+                'membership.title': 1
+            },
+        },
+        { $unwind: "$membership" }
+    ], function(err, membershipDetails) {
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(membershipDetails[0]);
+
+        /* userData = { 'stripe_subscription_id': existingUser.subscription_id }
+        fetchCustomerDetails = await getCustomerDetails(userData, res); // Save New Customer
+
+        console.log(fetchCustomerDetails);
+
+        if (fetchCustomerDetails.id) {
+
+            membershipDetails.push({ 'next_invoice_date': fetchCustomerDetails.current_period_end })
+            let data = {
+                next_invoice_date: fetchCustomerDetails.current_period_end,
+
+            }
+        }
+        */
+
+
+    })
+
+
+
+
+
+
+
 
 
 
@@ -1719,11 +1896,96 @@ exports.cancelYourSubscription = async(req, res) => {
             if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
             // todo: don't forget to handle err
 
-            return res.status(responseCode.CODES.SUCCESS.OK).send(req.polyglot.t('SUBSCRIPTION-CANCELLED-SUCCESS'));
+            return res.status(responseCode.CODES.SUCCESS.OK).send(true);
         });
     } else {
         return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(req.polyglot.t('SUBSCRIPTION-CANCELLED-FAILED'));
     }
+
+}
+
+exports.defaultCard = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let PaymentDetailsArray = existingUser.payment_details;
+
+
+    stripe.customers.update(
+        existingUser.stripe_customer_id, { invoice_settings: { default_payment_method: req.body.card_id } },
+        function(err, customer) {
+            // asynchronously called
+            if (err) { handleStripeError(err, res) } // Create Card Error
+
+            for (var x = 0; x < PaymentDetailsArray.length; x++) {
+                if (PaymentDetailsArray[x].stripe_card_id === req.body.card_id) {
+                    PaymentDetailsArray[x].default = true;
+                } else {
+                    PaymentDetailsArray[x].default = false;
+                }
+
+            }
+
+            // set new card as default card in DB		
+
+            User.findOneAndUpdate({ _id: userID }, { $set: { 'payment_details': PaymentDetailsArray } }, { new: true }, function(err, doc) {
+
+                if (err) {
+                    return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('CARD-UPDATE-FAILED'));
+                }
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+            });
+
+        }
+    );
+
+}
+
+exports.removeCard = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let PaymentDetailsArray = existingUser.payment_details;
+
+
+    // delete Card From Stripe
+    stripe.customers.deleteSource(
+        existingUser.stripe_customer_id,
+        req.body.card_id,
+        function(err, confirmation) {
+            // asynchronously called
+            if (err) { handleStripeError(err, res) } // Create Card Error
+
+            // Remove Card From DB
+            _.remove(PaymentDetailsArray, function(e) {
+                return e.stripe_card_id == req.body.card_id
+            });
+
+            User.findOneAndUpdate({ _id: userID }, { $set: { 'payment_details': PaymentDetailsArray } }, { new: true }, function(err, doc) {
+
+                if (err) {
+                    return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('CARD-UPDATE-FAILED'));
+                }
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+            });
+
+        }
+    );
+
 
 }
 
@@ -1909,9 +2171,14 @@ exports.search = async(req, res) => {
     condition['role'] = 'MENTOR'
     condition['stripe_customer_id'] = { "$nin": [null, ""] }
     condition['admin_status'] = 'APPROVED'
-    if (_.has(req.body.filters, ['category']) && (req.body.filters['category']).length > 0) {
-        condition['category_id'] = mongoose.Types.ObjectId(req.body.filters['category'])
+
+    if (_.has(req.body.filters, ['date']) && (req.body.filters['date']).length > 0) {
+        condition['availability.date'] = req.body.filters['date']
     }
+    if (_.has(req.body.filters, ['slot']) && (req.body.filters['slot']).length > 0) {
+        condition['availability.slots.value'] = req.body.filters['slot']
+    }
+
 
 
     if (_.has(req.body.filters, ['hourly_rate'])) {
@@ -1925,9 +2192,9 @@ exports.search = async(req, res) => {
 
         andcondition.push({
             $or: [
-                { subcategory_id1: mongoose.Types.ObjectId(req.body.filters['subcategory']) },
-                { subcategory_id2: mongoose.Types.ObjectId(req.body.filters['subcategory']) },
-                { subcategory_id3: mongoose.Types.ObjectId(req.body.filters['subcategory']) }
+                { 'subcategory1.subcategory_id': mongoose.Types.ObjectId(req.body.filters['subcategory']) },
+                { 'subcategory2.subcategory_id': mongoose.Types.ObjectId(req.body.filters['subcategory']) },
+                { 'subcategory3.subcategory_id': mongoose.Types.ObjectId(req.body.filters['subcategory']) }
             ]
         })
     }
@@ -1941,9 +2208,9 @@ exports.search = async(req, res) => {
                 { zipcode: { $regex: req.body.filters['location'], $options: 'i' } },
                 { address1: { $regex: req.body.filters['location'], $options: 'i' } },
                 { address2: { $regex: req.body.filters['location'], $options: 'i' } },
-                { country_value: { $regex: req.body.filters['location'], $options: 'i' } },
-                { state_value: { $regex: req.body.filters['location'], $options: 'i' } },
-                { city_value: { $regex: req.body.filters['location'], $options: 'i' } }
+                { 'country.value': req.body.filters['location'] },
+                { 'state.value': req.body.filters['location'] },
+                { 'city.value': req.body.filters['location'] }
             ]
         })
     }
@@ -1958,6 +2225,16 @@ exports.search = async(req, res) => {
             ]
         })
 
+    }
+
+    if (_.has(req.body.filters, ['category']) && (req.body.filters['category']).length > 0) {
+        andcondition.push({
+            $or: [
+                { 'category1.category_id': mongoose.Types.ObjectId(req.body.filters['category']) },
+                { 'category2.category_id': mongoose.Types.ObjectId(req.body.filters['category']) },
+                { 'category3.category_id': mongoose.Types.ObjectId(req.body.filters['category']) }
+            ]
+        })
     }
 
 
@@ -1975,60 +2252,7 @@ exports.search = async(req, res) => {
     User.aggregate([{
             $match: condition
         },
-        {
 
-            "$lookup": {
-                from: "states",
-                localField: "state_id",
-                foreignField: "_id",
-                as: "state",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "cities",
-                localField: "city_id",
-                foreignField: "_id",
-                as: "city",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "categories",
-                localField: "category_id",
-                foreignField: "_id",
-                as: "category",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "subcategories",
-                localField: "subcategory_id1",
-                foreignField: "_id",
-                as: "subcategory1",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "subcategories",
-                localField: "subcategory_id2",
-                foreignField: "_id",
-                as: "subcategory2",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "subcategories",
-                localField: "subcategory_id3",
-                foreignField: "_id",
-                as: "subcategory3",
-            }
-        },
         {
             $project: {
                 first_name: 1,
@@ -2040,13 +2264,15 @@ exports.search = async(req, res) => {
                 created_at: 1,
                 rating: 1,
                 servicable_zipcodes: 1,
-                'category.title': 1,
-                'country.title': 1,
-                'state.title': 1,
-                'city.title': 1,
-                'subcategory1.title': 1,
-                'subcategory2.title': 1,
-                'subcategory3.title': 1
+                city: 1,
+                country: 1,
+                state: 1,
+                subcategory1: 1,
+                subcategory2: 1,
+                subcategory3: 1,
+                category1: 1,
+                category2: 1,
+                category3: 1,
             },
         },
         { $sort: sortBy },

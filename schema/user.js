@@ -15,6 +15,9 @@ var userSchema = new mongoose.Schema({
     phone: { type: String },
     phone_token: { type: String },
     email_token: { type: String },
+    googleLoginId: {
+        type: String,
+    },
     profile_image: [{
         file_path: {
             type: String,
@@ -504,6 +507,11 @@ var userSchema = new mongoose.Schema({
         trim: true
     },
     subscription_id: {
+        type: String,
+        //unique: true,
+        trim: true
+    },
+    next_billing_date: {
         type: String,
         //unique: true,
         trim: true

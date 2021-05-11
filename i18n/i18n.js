@@ -42,6 +42,9 @@ exports.messages = {
         'ADD-YOUR-BILLING-METHOD': "Add your billing method to send booking request to mentor.",
         'SUBSCRIPTION-CANCELLED-FAILED': "Failed to cancel your subscription. Please try again in some time.",
         'SUBSCRIPTION-CANCELLED-SUCCESS': "Your subscription has been cancelled successfully.",
+        'CARD-UPDATE-FAILED': "Ooops, Failed to update your card. Please try again later.",
+        'DEFAULT-CARD-UPDATE-SUCCESS': "Your default card updated successfully.",
+        'NEW-BOOKING-REQUEST': "A new booking request has been recieved.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",
