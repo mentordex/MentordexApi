@@ -1845,32 +1845,7 @@ exports.getMentorMembershipDetails = async(req, res) => {
 
         return res.status(responseCode.CODES.SUCCESS.OK).send(membershipDetails[0]);
 
-        /* userData = { 'stripe_subscription_id': existingUser.subscription_id }
-        fetchCustomerDetails = await getCustomerDetails(userData, res); // Save New Customer
-
-        console.log(fetchCustomerDetails);
-
-        if (fetchCustomerDetails.id) {
-
-            membershipDetails.push({ 'next_invoice_date': fetchCustomerDetails.current_period_end })
-            let data = {
-                next_invoice_date: fetchCustomerDetails.current_period_end,
-
-            }
-        }
-        */
-
-
     })
-
-
-
-
-
-
-
-
-
 
 }
 

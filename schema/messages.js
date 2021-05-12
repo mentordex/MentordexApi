@@ -3,46 +3,24 @@ var mongoose = require('mongoose');
 var config = require('config');
 var Schema = mongoose.Schema
 
-var jobSchema = new mongoose.Schema({
-    job_title: {
+var messageSchema = new mongoose.Schema({
+    message: {
         type: String,
         trim: true
     },
-    job_description: {
-        type: String,
-        trim: true
-    },
-    category_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Category',
-    },
-    subcategory_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Subcategory',
-    },
-    parent_id: {
+    sender_id: {
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
-    mentor_id: {
+    receiver_id: {
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
-    booking_time: {
-        type: String,
+    job_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Jobs',
     },
-    hourly_rate: {
-        type: String,
-    },
-    booking_date: {
-        type: String,
-    },
-    job_status: {
-        type: String,
-        enum: ['NEW', 'APPROVED', 'CANCELLED', 'PENDING', 'ARCHIVED'],
-        default: 'PENDING'
-    },
-    job_file: [{
+    message_file: [{
         file_path: {
             type: String,
             trim: true
@@ -64,10 +42,10 @@ var jobSchema = new mongoose.Schema({
             trim: true
         }
     }],
-    job_active: {
+    is_read: {
         type: Boolean,
         enum: [true, false],
-        default: true
+        default: false
     },
     created_at: {
         type: Date,
@@ -81,4 +59,4 @@ var jobSchema = new mongoose.Schema({
 
 });
 
-module.exports.Jobs = mongoose.model('Jobs', jobSchema);
+module.exports.Messages = mongoose.model('Messages', messageSchema);

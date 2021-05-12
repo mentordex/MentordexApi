@@ -45,6 +45,8 @@ exports.messages = {
         'CARD-UPDATE-FAILED': "Ooops, Failed to update your card. Please try again later.",
         'DEFAULT-CARD-UPDATE-SUCCESS': "Your default card updated successfully.",
         'NEW-BOOKING-REQUEST': "A new booking request has been recieved.",
+        'BOOKING-ACCEPTED': "Congratulations! Your booking has been accpeted.",
+        'BOOKING-CANCELLED': "Your booking has been cancelled.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",
