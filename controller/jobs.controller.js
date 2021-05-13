@@ -68,7 +68,7 @@ exports.listing = async(req, res) => {
     let totalRecords = await Jobs.count(condition);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
-    console.log('totalPages', totalPages);
+    //console.log('totalPages', totalPages);
     let start = pageNumber * size;
 
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
@@ -144,7 +144,7 @@ exports.newBookingRequest = async(req, res) => {
         notificationArray['notification_type'] = 'BOOKING'
         notificationArray['notification'] = req.polyglot.t('NEW-BOOKING-REQUEST')
         notificationArray['job_id'] = newJob._id
-        notificationArray['user_id'] = req.body.userID
+        notificationArray['user_id'] = mentor_id
         notificationArray['user_type'] = 'MENTOR'
 
         let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
@@ -245,7 +245,7 @@ exports.upateBookingRequest = async(req, res) => {
     let notificationMsg = '';
 
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, jobId, job_status, job_message, parent_id } = req.body
+    const { userID, job_id, job_status, job_message, parent_id } = req.body
 
     // Check Valid User
     let existingUser = await User.findOne({ _id: userID });
@@ -253,12 +253,12 @@ exports.upateBookingRequest = async(req, res) => {
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     // Check Job Exist
-    let existingRecord = await Jobs.findOne({ _id: mongoose.Types.ObjectId(jobId) }, { _id: 1 });
+    let existingRecord = await Jobs.findOne({ _id: mongoose.Types.ObjectId(job_id) }, { _id: 1 });
 
     if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
 
     //save Jobs 
-    Jobs.findOneAndUpdate({ _id: mongoose.Types.ObjectId(jobId) }, { $set: { job_status: job_status } }, { new: true }, function(err, data) {
+    Jobs.findOneAndUpdate({ _id: mongoose.Types.ObjectId(job_id) }, { $set: { job_status: job_status } }, { new: true }, function(err, data) {
 
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
 
@@ -266,7 +266,7 @@ exports.upateBookingRequest = async(req, res) => {
         messagesArray['message'] = job_message
         messagesArray['sender_id'] = userID
         messagesArray['receiver_id'] = parent_id
-        messagesArray['job_id'] = jobId
+        messagesArray['job_id'] = job_id
             //messagesArray['message_file'] = job_file
 
         let newMessage = new Messages(_.pick(messagesArray, ['message', 'sender_id', 'receiver_id', 'job_id', 'is_read', 'created_at', 'modified_at']));
@@ -283,13 +283,14 @@ exports.upateBookingRequest = async(req, res) => {
         // Send New Notification To Parent
         notificationArray['notification_type'] = 'BOOKING'
         notificationArray['notification'] = notificationMsg
-        notificationArray['job_id'] = jobId
+        notificationArray['job_id'] = job_id
         notificationArray['user_id'] = parent_id
         notificationArray['user_type'] = 'PARENT'
 
         let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
         newNotification.save(async function(err, record) {});
+
         return res.status(responseCode.CODES.SUCCESS.OK).send(true);
 
     });

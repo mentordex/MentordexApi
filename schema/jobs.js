@@ -39,7 +39,7 @@ var jobSchema = new mongoose.Schema({
     },
     job_status: {
         type: String,
-        enum: ['NEW', 'APPROVED', 'CANCELLED', 'PENDING', 'ARCHIVED'],
+        enum: ['NEW', 'ACCEPTED', 'CANCELLED', 'PENDING', 'ARCHIVED'],
         default: 'PENDING'
     },
     job_file: [{
