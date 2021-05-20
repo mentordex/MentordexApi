@@ -47,6 +47,7 @@ exports.messages = {
         'NEW-BOOKING-REQUEST': "A new booking request has been recieved.",
         'BOOKING-ACCEPTED': "Congratulations! Your booking has been accpeted.",
         'BOOKING-CANCELLED': "Your booking has been cancelled.",
+        'NEW-MESSAGE-RECEIVED': "A new message has been recieved.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",

@@ -849,55 +849,7 @@ exports.getMentorProfileDetailsById = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    /*condition['_id'] = mongoose.Types.ObjectId(mentorId);
-    User.aggregate([{
-            $match: condition
-        },
-        {
 
-            "$lookup": {
-                from: "categories",
-                localField: "category_id1",
-                foreignField: "_id",
-                as: "category",
-            }
-        },
-        {
-            $project: {
-                'category_id1': 1,
-                'academics': 1,
-                'achievements': 1,
-                'employments': 1,
-                'profile_image': 1,
-                'introduction_video': 1,
-                'tagline': 1,
-                'servicable_zipcodes': 1,
-                'bio': 1,
-                'hourly_rate': 1,
-                'website': 1,
-                'first_name': 1,
-                'last_name': 1,
-                'primary_language': 1,
-                'first_name': 1,
-                'subcategory_id1': 1,
-                'subcategory_id2': 1,
-                'subcategory_id3': 1,
-                'city_value': 1,
-                'rating': 1,
-                'country_value': 1,
-                'state_value': 1,
-                'letter_of_recommendation': 1,
-                'category.title': 1
-            },
-        },
-        { $unwind: "$category" }
-    ], function(err, profileDetails) {
-        //if (err) { console.log(err) }
-        //console.log(profileDetails)
-        //let data = {records: profileDetails}
-        return res.status(responseCode.CODES.SUCCESS.OK).send(profileDetails[0]);
-    })
-    */
 
     let getMentorDetails = await User.findOne({ _id: mentorId });
 
@@ -1364,6 +1316,11 @@ exports.updateNotes = async(req, res) => {
         existingUser.appointment_time = req.body.appointment_time
         existingUser.appointment_date = req.body.appointment_date
     }
+
+    if (req.body.status == 'APPROVED') {
+        existingUser.is_active = 'ACTIVE';
+    }
+
     existingUser.notes.push({
         status: req.body.status,
         notes: req.body.notes,
@@ -1371,10 +1328,11 @@ exports.updateNotes = async(req, res) => {
         appointment_date: (req.body.status == 'RESCHEDULED') ? req.body.appointment_date : '',
         created_at: new Date()
     });
+
     existingUser.save(function(err, user) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
         // todo: don't forget to handle err
-        console.log('status', req.body.status)
+        //console.log('status', req.body.status)
         let msg = ''
         if (req.body.status == 'RESCHEDULED') {
             msg = {
@@ -2146,6 +2104,8 @@ exports.search = async(req, res) => {
     condition['role'] = 'MENTOR'
     condition['stripe_customer_id'] = { "$nin": [null, ""] }
     condition['admin_status'] = 'APPROVED'
+    condition['is_active'] = 'ACTIVE'
+    condition['subscription_status'] = 'ACTIVE'
 
     if (_.has(req.body.filters, ['date']) && (req.body.filters['date']).length > 0) {
         condition['availability.date'] = req.body.filters['date']

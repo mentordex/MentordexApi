@@ -17,6 +17,10 @@ var notificationSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'Jobs',
     },
+    message_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Messages',
+    },
     user_id: {
         type: Schema.Types.ObjectId,
         ref: 'User',
@@ -27,6 +31,11 @@ var notificationSchema = new mongoose.Schema({
         default: 'MENTOR'
     },
     is_read: {
+        type: Boolean,
+        enum: [true, false],
+        default: false
+    },
+    is_archived: {
         type: Boolean,
         enum: [true, false],
         default: false

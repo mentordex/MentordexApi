@@ -60,6 +60,7 @@ require("./routes/jobs.routes")(app)
 require("./routes/membership.routes")(app)
 require("./routes/review.routes")(app)
 require("./routes/notifications.routes")(app)
+require("./routes/messages.routes")(app)
     //Interceptors
 
 module.exports = app;

@@ -161,7 +161,7 @@ exports.newBookingRequest = async(req, res) => {
 }
 
 
-exports.getJobDetails = async(req, res) => {
+exports.getMentorJobDetails = async(req, res) => {
     //console.log(req.body);
     let condition = {};
     const { userID, jobId } = req.body

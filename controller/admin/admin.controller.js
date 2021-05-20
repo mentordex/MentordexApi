@@ -25,7 +25,7 @@ const nodemailer = require("nodemailer");
 
 
 exports.aboutContent = async(req, res) => {
-    let data = await About.findOne({ });
+    let data = await About.findOne({});
     return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 }
 exports.bannerListing = async(req, res) => {
@@ -34,7 +34,7 @@ exports.bannerListing = async(req, res) => {
     let condition = {};
     let sortBy = {};
     sortBy['created_at'] = -1
-   
+
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
         condition['title'] = { $regex: req.body['search'], $options: 'i' }
     }
@@ -135,9 +135,9 @@ exports.appointmentListing = async(req, res) => {
     const { size, pageNumber } = req.body
     let condition = {};
     let sortBy = {};
-   
+
     condition['role'] = 'MENTOR'
-  
+
     if (_.has(req.body, ['search']) && (req.body['search']) && (req.body['search']).length > 0) {
         //condition['title'] = { $regex: req.body['search'], $options: 'i' }
         condition['first_name'] = { $regex: req.body['search'], $options: 'i' }
@@ -147,15 +147,15 @@ exports.appointmentListing = async(req, res) => {
         condition['created_at'] = {
             '$gte': new Date(req.body['from']),
             '$lte': new Date(req.body['to'])
-          }
+        }
     }
 
-  
-    if (_.has(req.body, ['status']) && (req.body['status']).length > 0 && req.body['status']!='ALL') {
+
+    if (_.has(req.body, ['status']) && (req.body['status']).length > 0 && req.body['status'] != 'ALL') {
         condition['admin_status'] = req.body['status'];
     }
 
-console.log('condition',condition)
+    console.log('condition', condition)
     let totalRecords = await User.count(condition);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
@@ -166,107 +166,107 @@ console.log('condition',condition)
     let limit = parseInt(size);
 
     User.aggregate(
-    [
-        {
-            $match: condition
-        },      
-       
-        {
-
-            "$lookup": {
-                from: "categories",
-                localField: "category_id",
-                foreignField: "_id",
-                as: "category",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "countries",
-                localField: "country_id",
-                foreignField: "_id",
-                as: "country",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "states",
-                localField: "state_id",
-                foreignField: "_id",
-                as: "state",
-            }
-        },
-        {
-
-            "$lookup": {
-                from: "cities",
-                localField: "city_id",
-                foreignField: "_id",
-                as: "city",
-            }
-        },
-        {
-            "$lookup": {
-              from: "subcategories",
-              localField: "subcategories",
-              foreignField: "_id",
-              as: "subcategory",
-            } 
-          },
-           
-      
-       
-        {
-            $project: {
-                name: 1,
-                letter_of_recommendation:1,
-                first_name:1,
-                is_active: 1,
-                admin_status:1,
-                email: 1,
-                fax: 1,
-                mobile: 1,
-                phone:1,
-                created_at: 1,
-                office_phone: 1,
-                profile_pic: 1,               
-                role: 1,
-                'category.title': 1,
-                'country.title': 1,
-                'state.title': 1,
-                'city.title': 1,
-                'subcategory.title':1,
-                subcategories:1,
-                appointment_date:1,
-                appointment_time:1,
-                gender:1,
-                primary_language:1,
-                dob:1,
-                address1:1,
-                address2:1,
-                social_links:1,
-                zipcode:1,
-                notes:1,
-                references:1
-
+        [{
+                $match: condition
             },
-        },
+
+            {
+
+                "$lookup": {
+                    from: "categories",
+                    localField: "category_id",
+                    foreignField: "_id",
+                    as: "category",
+                }
+            },
+            {
+
+                "$lookup": {
+                    from: "countries",
+                    localField: "country_id",
+                    foreignField: "_id",
+                    as: "country",
+                }
+            },
+            {
+
+                "$lookup": {
+                    from: "states",
+                    localField: "state_id",
+                    foreignField: "_id",
+                    as: "state",
+                }
+            },
+            {
+
+                "$lookup": {
+                    from: "cities",
+                    localField: "city_id",
+                    foreignField: "_id",
+                    as: "city",
+                }
+            },
+            {
+                "$lookup": {
+                    from: "subcategories",
+                    localField: "subcategories",
+                    foreignField: "_id",
+                    as: "subcategory",
+                }
+            },
 
 
 
-    ], function(err, members) {
+            {
+                $project: {
+                    name: 1,
+                    letter_of_recommendation: 1,
+                    first_name: 1,
+                    is_active: 1,
+                    admin_status: 1,
+                    email: 1,
+                    fax: 1,
+                    mobile: 1,
+                    phone: 1,
+                    created_at: 1,
+                    office_phone: 1,
+                    profile_pic: 1,
+                    role: 1,
+                    'category.title': 1,
+                    'country.title': 1,
+                    'state.title': 1,
+                    'city.title': 1,
+                    'subcategory.title': 1,
+                    subcategories: 1,
+                    appointment_date: 1,
+                    appointment_time: 1,
+                    gender: 1,
+                    primary_language: 1,
+                    dob: 1,
+                    address1: 1,
+                    address2: 1,
+                    social_links: 1,
+                    zipcode: 1,
+                    notes: 1,
+                    references: 1
 
-        let data = {
-            records: members,
-            total_records: totalRecords
-        }
-        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
-    })
-     
+                },
+            },
 
-    
+
+
+        ],
+        function(err, members) {
+
+            let data = {
+                records: members,
+                total_records: totalRecords
+            }
+            return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+        })
+
+
+
     /* let users = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
      let data = {
          records:users,
@@ -287,24 +287,23 @@ exports.userListing = async(req, res) => {
     sortBy['created_at'] = -1
 
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
-        condition['first_name'] = { $regex: req.body['search'], $options: 'i' }        
+        condition['first_name'] = { $regex: req.body['search'], $options: 'i' }
     }
     if (_.has(req.body, ['user_type']) && (req.body['user_type']).length > 0) {
-        if(req.body['user_type']=='MENTOR'){
+        if (req.body['user_type'] == 'MENTOR') {
             condition['admin_status'] = 'APPROVED';
         }
         condition['role'] = req.body['user_type'];
-    }else{
-        
-        condition =  
-            {
-                $or: [
-                    { role:'PARENT' },
-                    { $and: [{ role : 'MENTOR' }, { "admin_status" : 'APPROVED' }] }
-                
-                ]
-            }
-      
+    } else {
+
+        condition = {
+            $or: [
+                { role: 'PARENT' },
+                { $and: [{ role: 'MENTOR' }, { "admin_status": 'APPROVED' }] }
+
+            ]
+        }
+
     }
     console.log(condition)
 
@@ -333,7 +332,7 @@ exports.userListing = async(req, res) => {
         {
             $project: {
                 'name': 1,
-                first_name:1,
+                first_name: 1,
                 is_active: 1,
                 'email': 1,
                 'fax': 1,
@@ -387,14 +386,14 @@ exports.mentorListing = async(req, res) => {
     let sortBy = {};
     sortBy['created_at'] = -1
     condition['role'] = 'MENTOR';
-    
+
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
         condition['title'] = { $regex: req.body['search'], $options: 'i' }
         condition['email'] = { $regex: req.body['search'], $options: 'i' }
     }
     if (_.has(req.body, ['admin_status']) && (req.body['admin_status']).length > 0) {
         condition['admin_status'] = req.body['admin_status'];
-    }else{
+    } else {
         condition['admin_status'] = 'NEW'
     }
 
@@ -409,20 +408,20 @@ exports.mentorListing = async(req, res) => {
     let limit = parseInt(size);
 
 
-   
-console.log('condition',condition)
-    let users = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
-     let data = {
-         records:users,
-         total_records:totalRecords
-     }
 
-     return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+    //console.log('condition',condition)
+    let users = await User.find(condition).skip(skip).limit(limit).sort(sortBy);
+    let data = {
+        records: users,
+        total_records: totalRecords
+    }
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 
 }
 
-exports.countryListing = async (req, res) => {
-    const {  size, pageNumber } = req.body
+exports.countryListing = async(req, res) => {
+    const { size, pageNumber } = req.body
     let condition = {};
     let sortBy = {};
     sortBy['created_at'] = -1
@@ -431,96 +430,26 @@ exports.countryListing = async (req, res) => {
         condition['title'] = { $regex: req.body['search'], $options: 'i' }
     }
 
-    let totalRecords = await Country.count(condition);   
+    let totalRecords = await Country.count(condition);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
-    
+
     let start = pageNumber * size;
 
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
     let limit = parseInt(size);
     let records = await Country.find(condition).skip(skip).limit(limit).sort(sortBy);
     let data = {
-        records:records,
-        total_records:totalRecords
+        records: records,
+        total_records: totalRecords
     }
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(data);
 }
 
-exports.stateListing = async (req, res) => {
-   
-    const {  size, pageNumber } = req.body
-    let condition = {};
-    let sortBy = {};
-    sortBy['created_at'] =  -1     
-    
-    if (_.has(req.body, ['search'])   &&  (req.body['search']).length>0){ 
-        condition['title'] =  { $regex: req.body['search'], $options: 'i' }   
-    }
-    if (_.has(req.body, ['country_id'])   &&  (req.body['country_id']).length>0){ 
-        condition['country_id'] =  mongoose.Types.ObjectId(req.body['country_id'])  
-    }
-    
-   
-    let totalRecords = await State.count(condition);   
-    //calculating the limit and skip attributes to paginate records
-    let totalPages = totalRecords / size;
-    console.log('totalPages',totalPages);
-    let start = pageNumber * size;
-  
-    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
-    let limit = parseInt(size);  
-    
-  
-    State.aggregate([
-        {
-            $match: condition
-        },
-        { 
-            
-            "$lookup": {
-                from: "countries",
-                localField: "country_id",
-                foreignField: "_id",
-                as: "country"
-            }
-        },                
-        {
-            $project: {   
-                'title':1, 
-                'is_active':1, 
-                'country_id':1,     
-                'created_at':1,
-                'modified_at':1,              
-                'country.title':1,           
-                                                        
-            },
-        }, 
-        {
-         
-            $skip: skip
-        },
-        {
-            $limit: limit
-        },
-        {
-            $sort: sortBy
-        } 
+exports.stateListing = async(req, res) => {
 
-      ], function(err, records){    
-          
-          let data = {
-            records:records,
-            total_records:totalRecords
-          }
-        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
-      })
-}
-
-exports.cityListing = async (req, res) => {
-   
-    const {  size, pageNumber } = req.body
+    const { size, pageNumber } = req.body
     let condition = {};
     let sortBy = {};
     sortBy['created_at'] = -1
@@ -528,26 +457,22 @@ exports.cityListing = async (req, res) => {
     if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
         condition['title'] = { $regex: req.body['search'], $options: 'i' }
     }
-    if (_.has(req.body, ['country_id'])   &&  (req.body['country_id']).length>0){ 
-        condition['country_id'] =  mongoose.Types.ObjectId(req.body['country_id'])  
+    if (_.has(req.body, ['country_id']) && (req.body['country_id']).length > 0) {
+        condition['country_id'] = mongoose.Types.ObjectId(req.body['country_id'])
     }
-    if (_.has(req.body, ['state_id'])   &&  (req.body['state_id']).length>0){ 
-        condition['state_id'] =  mongoose.Types.ObjectId(req.body['state_id'])  
-    }
-    
-   
-    let totalRecords = await City.count(condition);   
+
+
+    let totalRecords = await State.count(condition);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
     console.log('totalPages', totalPages);
     let start = pageNumber * size;
 
     let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
-    let limit = parseInt(size);  
-    
-  
-    City.aggregate([
-        {
+    let limit = parseInt(size);
+
+
+    State.aggregate([{
             $match: condition
         },
         {
@@ -558,29 +483,16 @@ exports.cityListing = async (req, res) => {
                 foreignField: "_id",
                 as: "country"
             }
-        },  
-        { 
-            
-            "$lookup": {
-                from: "states",
-                localField: "state_id",
-                foreignField: "_id",
-                as: "state"
-            }
         },
         {
-            $project: {   
-                'title':1, 
-                'is_active':1, 
-                'zipcodes':1, 
-                'image':1,
-                'state_id':1, 
-                'country_id':1, 
-                'modified_at':1,     
-                'created_at':1,              
-                'country.title':1, 
-                'state.title':1,           
-                                                        
+            $project: {
+                'title': 1,
+                'is_active': 1,
+                'country_id': 1,
+                'created_at': 1,
+                'modified_at': 1,
+                'country.title': 1,
+
             },
         },
         {
@@ -601,10 +513,95 @@ exports.cityListing = async (req, res) => {
             total_records: totalRecords
         }
         return res.status(responseCode.CODES.SUCCESS.OK).send(data);
-      })
+    })
 }
 
-exports.categoryListing = async (req, res) => {
+exports.cityListing = async(req, res) => {
+
+    const { size, pageNumber } = req.body
+    let condition = {};
+    let sortBy = {};
+    sortBy['created_at'] = -1
+
+    if (_.has(req.body, ['search']) && (req.body['search']).length > 0) {
+        condition['title'] = { $regex: req.body['search'], $options: 'i' }
+    }
+    if (_.has(req.body, ['country_id']) && (req.body['country_id']).length > 0) {
+        condition['country_id'] = mongoose.Types.ObjectId(req.body['country_id'])
+    }
+    if (_.has(req.body, ['state_id']) && (req.body['state_id']).length > 0) {
+        condition['state_id'] = mongoose.Types.ObjectId(req.body['state_id'])
+    }
+
+
+    let totalRecords = await City.count(condition);
+    //calculating the limit and skip attributes to paginate records
+    let totalPages = totalRecords / size;
+    console.log('totalPages', totalPages);
+    let start = pageNumber * size;
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+
+    City.aggregate([{
+            $match: condition
+        },
+        {
+
+            "$lookup": {
+                from: "countries",
+                localField: "country_id",
+                foreignField: "_id",
+                as: "country"
+            }
+        },
+        {
+
+            "$lookup": {
+                from: "states",
+                localField: "state_id",
+                foreignField: "_id",
+                as: "state"
+            }
+        },
+        {
+            $project: {
+                'title': 1,
+                'is_active': 1,
+                'zipcodes': 1,
+                'image': 1,
+                'state_id': 1,
+                'country_id': 1,
+                'modified_at': 1,
+                'created_at': 1,
+                'country.title': 1,
+                'state.title': 1,
+
+            },
+        },
+        {
+
+            $skip: skip
+        },
+        {
+            $limit: limit
+        },
+        {
+            $sort: sortBy
+        }
+
+    ], function(err, records) {
+
+        let data = {
+            records: records,
+            total_records: totalRecords
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+    })
+}
+
+exports.categoryListing = async(req, res) => {
 
     const { size, pageNumber } = req.body
     let condition = {};
@@ -643,7 +640,7 @@ exports.categoryListing = async (req, res) => {
                 count: 1,
                 image: 1,
                 image_object: 1,
-                is_active:1,
+                is_active: 1,
                 is_visible_on_home: 1,
                 created_at: 1,
                 modified_at: 1,
@@ -1262,13 +1259,14 @@ exports.dashboard = async(req, res) => {
     const propertiesCount = await Property.countDocuments({});
     const userCount = await User.countDocuments({});
     const cityCount = await City.countDocuments({});
-   // const neighboursCount = await Neighbourhood.countDocuments({});
-    const propertiesToActionCount = await Property.countDocuments({save_as:'IN-REVIEW'});
+    // const neighboursCount = await Neighbourhood.countDocuments({});
+    const propertiesToActionCount = await Property.countDocuments({ save_as: 'IN-REVIEW' });
     return res.status(responseCode.CODES.SUCCESS.OK).send({
         data: {
             propertiesCount,
-            userCount,cityCount,
-            neighboursCount:0,
+            userCount,
+            cityCount,
+            neighboursCount: 0,
             propertiesToActionCount
         }
 
@@ -1318,7 +1316,7 @@ exports.dayTimeslotListing = async(req, res) => {
     let sortBy = {};
     sortBy['created_at'] = -1
 
-   
+
 
 
     let totalRecords = await DayTimeslot.count(condition);
