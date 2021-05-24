@@ -16,7 +16,25 @@ var mongoose = require('mongoose');
 }
 */
 
+exports.markedAsArchived = async(req, res) => {
+    //console.log(req.body);
+    let condition = {};
+    const { userID, notification_id } = req.body
 
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    Notifications.findOneAndUpdate({ _id: mongoose.Types.ObjectId(notification_id) }, { $set: { is_archived: true } }, { new: true }, function(err, data) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+    });
+
+}
 
 exports.getNotifications = async(req, res) => {
     //console.log(req.body);
@@ -29,7 +47,7 @@ exports.getNotifications = async(req, res) => {
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     condition['user_id'] = mongoose.Types.ObjectId(userID);
-    //condition['is_archived'] = false;
+    condition['is_archived'] = false;
     Notifications.aggregate([{
             $match: condition
         },

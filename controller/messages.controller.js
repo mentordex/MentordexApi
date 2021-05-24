@@ -302,6 +302,242 @@ exports.saveMentorMessage = async(req, res) => {
 }
 
 
+exports.getParentJobs = async(req, res) => {
+    //console.log(req.body);
+    let jobCondition = {};
+
+    let sortBy = {};
+    sortBy['created_at'] = -1
+
+    const { userID } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    jobCondition['parent_id'] = mongoose.Types.ObjectId(userID);
+
+    Jobs.aggregate([{
+            $match: jobCondition
+        },
+        { $sort: { created_at: -1 } },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "parent_id",
+                foreignField: "_id",
+                as: "parent",
+            }
+        },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "mentor_id",
+                foreignField: "_id",
+                as: "mentor",
+            }
+        },
+        {
+            $project: {
+                'job_title': 1,
+                'job_description': 1,
+                'parent_id': 1,
+                'mentor_id': 1,
+                'booking_time': 1,
+                'hourly_rate': 1,
+                'booking_date': 1,
+                'job_active': 1,
+                'created_at': 1,
+                'modified_at': 1,
+                'job_status': 1,
+                'mentor.first_name': 1,
+                'mentor.last_name': 1,
+                'mentor.profile_image': 1,
+                'parent.first_name': 1,
+                'parent.last_name': 1,
+                'parent.profile_image': 1,
+            },
+        },
+        { $unwind: "$mentor" },
+        { $unwind: "$parent" }
+    ], function(err, jobDetails) {
+        if (err) { console.log(err); }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(jobDetails);
+    })
+
+}
+
+
+exports.getParentJobsById = async(req, res) => {
+    //console.log(req.body);
+    let jobCondition = {};
+
+    let sortBy = {};
+    sortBy['created_at'] = -1
+
+    const { userID, job_id } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    jobCondition['parent_id'] = mongoose.Types.ObjectId(userID);
+    jobCondition['_id'] = mongoose.Types.ObjectId(job_id);
+
+    Jobs.aggregate([{
+            $match: jobCondition
+        },
+        { $sort: { created_at: -1 } },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "parent_id",
+                foreignField: "_id",
+                as: "parent",
+            }
+        },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "mentor_id",
+                foreignField: "_id",
+                as: "mentor",
+            }
+        },
+        {
+            $project: {
+                'job_title': 1,
+                'job_description': 1,
+                'parent_id': 1,
+                'mentor_id': 1,
+                'booking_time': 1,
+                'hourly_rate': 1,
+                'booking_date': 1,
+                'job_active': 1,
+                'created_at': 1,
+                'modified_at': 1,
+                'job_status': 1,
+                'mentor.first_name': 1,
+                'mentor.last_name': 1,
+                'mentor.profile_image': 1,
+                'parent.first_name': 1,
+                'parent.last_name': 1,
+                'parent.profile_image': 1,
+            },
+        },
+        { $unwind: "$mentor" },
+        { $unwind: "$parent" }
+    ], function(err, jobDetails) {
+        if (err) { console.log(err); }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(jobDetails);
+    })
+}
+
+
+exports.getParentJobMessages = async(req, res) => {
+    //console.log(req.body);
+    let msgCondition = {};
+
+    let sortBy = {};
+    sortBy['created_at'] = -1
+
+    const { userID, job_id } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    msgCondition['job_id'] = mongoose.Types.ObjectId(job_id);
+
+    Messages.aggregate([{
+            $match: msgCondition
+        },
+        { $sort: { created_at: 1 } },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "sender_id",
+                foreignField: "_id",
+                as: "sender",
+            }
+        },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "receiver_id",
+                foreignField: "_id",
+                as: "receiver",
+            }
+        },
+        {
+            $project: {
+                'sender_id': 1,
+                'receiver_id': 1,
+                'job_id': 1,
+                'message_file': 1,
+                'is_read': 1,
+                'message': 1,
+                'created_at': 1,
+                'sender.first_name': 1,
+                'sender.last_name': 1,
+                'sender.profile_image': 1,
+                'receiver.first_name': 1,
+                'receiver.last_name': 1,
+                'receiver.profile_image': 1,
+            },
+        },
+        { $unwind: "$sender" },
+        { $unwind: "$receiver" }
+    ], function(err, messagesDetails) {
+        if (err) { console.log(err); }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(messagesDetails);
+    })
+}
+
+exports.saveParentMessage = async(req, res) => {
+    let messagesArray = [];
+    let notificationArray = [];
+    const { userID, message, job_id, message_file, mentor_id } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    // Add New Messages
+    messagesArray['message'] = message
+    messagesArray['sender_id'] = userID
+    messagesArray['receiver_id'] = mentor_id
+    messagesArray['job_id'] = job_id
+    messagesArray['message_file'] = message_file
+
+    let newMessage = new Messages(_.pick(messagesArray, ['message', 'sender_id', 'receiver_id', 'job_id', 'message_file', 'is_read', 'created_at', 'modified_at']));
+
+    newMessage.save(async function(err, response) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        // Add New Notification
+        notificationArray['notification_type'] = 'MESSAGE'
+        notificationArray['notification'] = req.polyglot.t('NEW-MESSAGE-RECEIVED')
+        notificationArray['job_id'] = job_id
+        notificationArray['user_id'] = mentor_id
+        notificationArray['user_type'] = 'PARENT'
+
+        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
+
+        newNotification.save(async function(err, record) {});
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+    });
+
+}
+
+
+
 function getMessagesByJobId(msgCondition, res) {
     // create a customer 
     return new Promise(function(resolve, reject) {

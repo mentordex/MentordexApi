@@ -1481,7 +1481,7 @@ exports.buySubscription = async(req, res) => {
                                 // Update Mentor Customer Id and Payment Details
                                 existingUser.stripe_customer_id = saveCustomer.id;
                                 existingUser.subscription_id = saveSubscription.id;
-                                existingUser.next_billing_date = saveSubscription.current_period_start;
+                                existingUser.next_billing_date = saveSubscription.current_period_end;
                                 existingUser.subscription_status = 'ACTIVE';
                                 existingUser.price_id = req.body.priceId;
                                 existingUser.membership_id = req.body.membershipId;
@@ -1569,7 +1569,7 @@ exports.buySubscription = async(req, res) => {
                             existingUser.payment_details = PaymentDetailsArray;
                             existingUser.subscription_id = saveSubscription.id;
                             existingUser.subscription_status = 'ACTIVE';
-                            existingUser.next_billing_date = saveSubscription.current_period_start;
+                            existingUser.next_billing_date = saveSubscription.current_period_end;
                             existingUser.membership_id = req.body.membershipId;
                             existingUser.price_id = req.body.priceId;
                             existingUser.billing_details = req.body.billing_details;
@@ -1795,6 +1795,7 @@ exports.getMentorMembershipDetails = async(req, res) => {
                 'next_billing_date': 1,
                 'subscription_status': 1,
                 'membership.price': 1,
+                'membership.type': 1,
                 'membership.title': 1
             },
         },
@@ -1820,7 +1821,7 @@ exports.cancelYourSubscription = async(req, res) => {
     userData = { 'stripe_subscription_id': existingUser.subscription_id }
 
     cancelCustomerSubscription = await cancelSubscription(userData, res); // Save New Customer
-    console.log(cancelCustomerSubscription);
+    //console.log(cancelCustomerSubscription);
 
     if (cancelCustomerSubscription.status == 'canceled') {
         // Update Payment Details Array
@@ -1833,6 +1834,75 @@ exports.cancelYourSubscription = async(req, res) => {
         });
     } else {
         return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(req.polyglot.t('SUBSCRIPTION-CANCELLED-FAILED'));
+    }
+
+}
+
+
+exports.upgradeYourSubscription = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    let transactionArray = [];
+    let paymentDetailsArray = [];
+    let subscriptionData = {};
+    let subscriptionUpdated;
+    let subscription;
+
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    userData = { 'stripe_subscription_id': existingUser.subscription_id }
+
+    subscription = await stripe.subscriptions.retrieve(existingUser.subscription_id);
+    //console.log(cancelCustomerSubscription);
+
+    if (subscription.id) {
+        subscriptionData = { 'subscription_id': subscription.id, 'price_id': req.body.priceId, itemId: subscription.items.data[0].id }
+
+        subscriptionUpdated = await updateSubscription(subscriptionData, res);
+
+        if (subscriptionUpdated.id && (subscriptionUpdated.pending_update == null || subscriptionUpdated.pending_update == '')) {
+
+            existingUser.subscription_id = subscriptionUpdated.id;
+            existingUser.subscription_status = 'ACTIVE';
+            existingUser.next_billing_date = subscriptionUpdated.current_period_end;
+            existingUser.membership_id = req.body.membershipId;
+            existingUser.price_id = req.body.priceId;
+
+            existingUser.save(function(err, user) {
+                if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                // todo: don't forget to handle err
+
+                // get default payment method details
+                paymentDetailsArray = existingUser.payment_details.filter(function(item) {
+                    return item.default === true;
+                });
+
+
+                // Save New Transaction
+                transactionArray['transaction_type'] = 'Subscription'
+                transactionArray['user_id'] = req.body.userID
+                transactionArray['price_id'] = req.body.priceId
+                transactionArray['invoice_id'] = subscriptionUpdated.latest_invoice;
+                transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray.stripe_card_id, 'credit_card_number': paymentDetailsArray.credit_card_number, 'card_type': paymentDetailsArray.card_type, 'card_holder_name': paymentDetailsArray.card_holder_name, 'exp_year': paymentDetailsArray.exp_year, 'exp_month': paymentDetailsArray.exp_month };
+                transactionArray['user_type'] = 'MENTOR'
+
+                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+
+                newTransaction.save(async function(err, record) {});
+                return res.status(responseCode.CODES.SUCCESS.OK).send({ success: req.polyglot.t('SUBSCRIPTION-UPGRADE-SUCCESS') });
+            });
+
+        } else {
+            return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(req.polyglot.t('SUBSCRIPTION-UPGRADE-FAILED'));
+        }
+
+    } else {
+        return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send(req.polyglot.t('SUBSCRIPTION-UPGRADE-FAILED'));
     }
 
 }
@@ -1975,6 +2045,33 @@ function createSubscription(subscriptionData, res) {
                 items: [
                     { price: subscriptionData.price_id, },
                 ]
+            },
+            function(err, subscription) {
+                // asynchronously called
+                if (err) {
+                    //console.log(err);
+                    reject(handleStripeError(err, res))
+                } // Handle Customer Error
+
+                resolve(subscription); // If Customer Successfully created
+
+            });
+    });
+
+}
+
+function updateSubscription(subscriptionData, res) {
+    // update a subscription 
+    return new Promise(function(resolve, reject) {
+
+        return await stripe.subscriptions.update(
+            subscriptionData.subscription_id, {
+                payment_behavior: 'pending_if_incomplete',
+                proration_behavior: 'always_invoice',
+                items: [{
+                    id: subscriptionData.itemId,
+                    price: subscriptionData.price_id,
+                }],
             },
             function(err, subscription) {
                 // asynchronously called
