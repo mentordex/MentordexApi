@@ -258,6 +258,13 @@ exports.validator = functionName => {
                     .exists().withMessage('USER-ID-REQUIRED')
                 ]
             }
+        case 'upgradeYourSubscription':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
 
         case 'defaultCard':
             {

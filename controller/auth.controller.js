@@ -1496,6 +1496,7 @@ exports.buySubscription = async(req, res) => {
                                     transactionArray['transaction_type'] = 'Subscription'
                                     transactionArray['user_id'] = req.body.userID
                                     transactionArray['price_id'] = req.body.priceId
+                                    transactionArray['price'] = req.body.price
                                     transactionArray['invoice_id'] = saveSubscription.latest_invoice;
                                     transactionArray['payment_details'] = { 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'default': true, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month };
 
@@ -1582,6 +1583,7 @@ exports.buySubscription = async(req, res) => {
                                 transactionArray['transaction_type'] = 'Subscription'
                                 transactionArray['user_id'] = req.body.userID
                                 transactionArray['price_id'] = req.body.priceId
+                                transactionArray['price'] = req.body.price
                                 transactionArray['invoice_id'] = saveSubscription.latest_invoice;
                                 transactionArray['payment_details'] = { 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month };
                                 transactionArray['user_type'] = 'MENTOR'
@@ -1882,11 +1884,13 @@ exports.upgradeYourSubscription = async(req, res) => {
                     return item.default === true;
                 });
 
+                //console.log('paymentDetailsArray', paymentDetailsArray);
 
                 // Save New Transaction
-                transactionArray['transaction_type'] = 'Subscription'
+                transactionArray['transaction_type'] = 'Update Subscription'
                 transactionArray['user_id'] = req.body.userID
                 transactionArray['price_id'] = req.body.priceId
+                transactionArray['price'] = req.body.price
                 transactionArray['invoice_id'] = subscriptionUpdated.latest_invoice;
                 transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray.stripe_card_id, 'credit_card_number': paymentDetailsArray.credit_card_number, 'card_type': paymentDetailsArray.card_type, 'card_holder_name': paymentDetailsArray.card_holder_name, 'exp_year': paymentDetailsArray.exp_year, 'exp_month': paymentDetailsArray.exp_month };
                 transactionArray['user_type'] = 'MENTOR'
@@ -2064,7 +2068,7 @@ function updateSubscription(subscriptionData, res) {
     // update a subscription 
     return new Promise(function(resolve, reject) {
 
-        return await stripe.subscriptions.update(
+        return stripe.subscriptions.update(
             subscriptionData.subscription_id, {
                 payment_behavior: 'pending_if_incomplete',
                 proration_behavior: 'always_invoice',

@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, checkGoogleLogin, signup, forgotPassword, userProfileData, getUserDetails, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, reviewListing, getParentDetails, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, updateProfileHourlyRateDetails, updateProfileAchievementDetails, updateProfileSocialLinksDetails, buySubscription, addYourPaymentMethod, getSavedPaymentMethod, getMentorMembershipDetails, cancelYourSubscription, defaultCard, removeCard, getMentorProfileDetailsById, getMentorSlotsByDate, uploadFile, deleteObject, testMail, updateNotes, search, subcategoryListing } = require('../controller/auth.controller')
+const { login, checkGoogleLogin, signup, forgotPassword, userProfileData, getUserDetails, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, reviewListing, getParentDetails, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, updateProfileHourlyRateDetails, updateProfileAchievementDetails, updateProfileSocialLinksDetails, buySubscription, addYourPaymentMethod, getSavedPaymentMethod, getMentorMembershipDetails, cancelYourSubscription, upgradeYourSubscription, defaultCard, removeCard, getMentorProfileDetailsById, getMentorSlotsByDate, uploadFile, deleteObject, testMail, updateNotes, search, subcategoryListing } = require('../controller/auth.controller')
 
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
@@ -85,6 +85,11 @@ module.exports = router => {
     router.post("/api/getMentorMembershipDetails", [validator('getMentorMembershipDetails')], procErr, getMentorMembershipDetails)
 
     router.post("/api/cancelYourSubscription", [validator('cancelYourSubscription')], procErr, cancelYourSubscription)
+
+    router.post("/api/upgradeYourSubscription", [validator('upgradeYourSubscription')], procErr, upgradeYourSubscription)
+
+
+
     router.post("/api/defaultCard", [validator('defaultCard')], procErr, defaultCard)
     router.post("/api/removeCard", [validator('removeCard')], procErr, removeCard)
 
