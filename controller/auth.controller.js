@@ -1892,7 +1892,7 @@ exports.upgradeYourSubscription = async(req, res) => {
                 transactionArray['price_id'] = req.body.priceId
                 transactionArray['price'] = req.body.price
                 transactionArray['invoice_id'] = subscriptionUpdated.latest_invoice;
-                transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray.stripe_card_id, 'credit_card_number': paymentDetailsArray.credit_card_number, 'card_type': paymentDetailsArray.card_type, 'card_holder_name': paymentDetailsArray.card_holder_name, 'exp_year': paymentDetailsArray.exp_year, 'exp_month': paymentDetailsArray.exp_month };
+                transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray[0].stripe_card_id, 'credit_card_number': paymentDetailsArray[0].credit_card_number, 'card_type': paymentDetailsArray[0].card_type, 'card_holder_name': paymentDetailsArray[0].card_holder_name, 'exp_year': paymentDetailsArray[0].exp_year, 'exp_month': paymentDetailsArray[0].exp_month };
                 transactionArray['user_type'] = 'MENTOR'
 
                 let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));

@@ -12,6 +12,10 @@ var transactionSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
+    job_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Jobs',
+    },
     user_type: {
         type: String,
         enum: ['PARENT', 'MENTOR'],
@@ -19,11 +23,23 @@ var transactionSchema = new mongoose.Schema({
     },
     invoice_id: {
         type: String,
-        trim: true
+        trim: true,
+        default: ''
+    },
+    price_id: {
+        type: String,
+        trim: true,
+        default: ''
     },
     price: {
-        type: Number,
-        default: 0
+        type: String,
+        trim: true,
+        default: '0'
+    },
+    receipt_url: {
+        type: String,
+        trim: true,
+        default: ''
     },
     payment_details: {
         stripe_card_id: {

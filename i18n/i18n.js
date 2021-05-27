@@ -50,6 +50,9 @@ exports.messages = {
         'BOOKING-ACCEPTED': "Congratulations! Your booking has been accpeted.",
         'BOOKING-CANCELLED': "Your booking has been cancelled.",
         'NEW-MESSAGE-RECEIVED': "A new message has been recieved.",
+        'NO-PAYMENT-METHOD-FOUND': "No Payment Method Found.",
+        'PAYMENT-FAILED': "Failed to make the payment. Please try again later.",
+        'JOB-COMPLETED': "Job mark as completed successfully.",
 
         // Success messages
         'loginSuccessful': "You've successfully logged in.",

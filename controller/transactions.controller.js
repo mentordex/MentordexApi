@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const config = require('config');
 const { Transactions } = require('../schema/transactions');
+const { Jobs } = require('../schema/jobs');
 const { User } = require('../schema/user');
 const responseCode = require('../utilities/responseCode');
 var mongoose = require('mongoose');
@@ -43,6 +44,7 @@ exports.getTransactions = async(req, res) => {
                 user_id: 1,
                 user_type: 1,
                 invoice_id: 1,
+                receipt_url: 1,
                 price: 1,
                 payment_details: 1,
                 created_at: 1,
@@ -96,6 +98,30 @@ exports.fetchInvoicesById = async(req, res) => {
         return res.status(responseCode.CODES.SUCCESS.OK).send({});
     }
 
+    //console.log(invoice);
+
+}
+
+
+exports.fetchJobsById = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, job_id } = req.body
+    let data = {};
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let existingJobs = await Jobs.findOne({ _id: mongoose.Types.ObjectId(job_id) });
+
+    if (!existingJobs) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+    data = {
+        job_title: existingJobs.job_title
+    }
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
     //console.log(invoice);
 
 }

@@ -39,8 +39,28 @@ var jobSchema = new mongoose.Schema({
     },
     job_status: {
         type: String,
-        enum: ['NEW', 'ACCEPTED', 'CANCELLED', 'PENDING', 'ARCHIVED'],
+        enum: ['NEW', 'ACCEPTED', 'CANCELLED', 'PENDING', 'ARCHIVED', 'COMPLETED'],
         default: 'PENDING'
+    },
+    parent_review: {
+        review: {
+            type: String,
+            trim: true
+        },
+        rating: {
+            type: Number,
+            default: 0
+        }
+    },
+    mentor_review: {
+        review: {
+            type: String,
+            trim: true
+        },
+        rating: {
+            type: Number,
+            default: 0
+        }
     },
     job_file: [{
         file_path: {

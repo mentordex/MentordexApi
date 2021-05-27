@@ -6,7 +6,7 @@ var Schema = mongoose.Schema
 var notificationSchema = new mongoose.Schema({
     notification_type: {
         type: String,
-        enum: ['BOOKING', 'MESSAGE', 'PAYMENT'],
+        enum: ['BOOKING', 'MESSAGE', 'PAYMENT', 'PAYMENT'],
         default: 'BOOKING'
     },
     notification: {
