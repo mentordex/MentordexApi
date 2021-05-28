@@ -152,6 +152,15 @@ exports.validator = functionName => {
                     .exists().withMessage('USER-ID-REQUIRED')
                 ]
             }
+
+        case 'updateParentProfile':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
         case 'updateBasicDetails':
             {
                 return [
@@ -282,6 +291,28 @@ exports.validator = functionName => {
             }
 
         case 'getMentorProfileDetailsById':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED'),
+
+                    check('mentorId')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'getMentorReviewsById':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED'),
+
+                    check('mentorId')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'saveMentor':
             {
                 return [
                     check('userID')

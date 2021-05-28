@@ -283,15 +283,18 @@ exports.saveMentorMessage = async(req, res) => {
 
     newMessage.save(async function(err, response) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
-
+        //console.log(response);
         // Add New Notification
         notificationArray['notification_type'] = 'MESSAGE'
         notificationArray['notification'] = req.polyglot.t('NEW-MESSAGE-RECEIVED')
         notificationArray['job_id'] = job_id
         notificationArray['user_id'] = parent_id
+        notificationArray['message_id'] = response._id;
         notificationArray['user_type'] = 'PARENT'
 
-        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
+        //console.log(notificationArray);
+
+        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'message_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
         newNotification.save(async function(err, record) {});
 
@@ -518,15 +521,18 @@ exports.saveParentMessage = async(req, res) => {
 
     newMessage.save(async function(err, response) {
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
-
+        //console.log(response);
         // Add New Notification
         notificationArray['notification_type'] = 'MESSAGE'
         notificationArray['notification'] = req.polyglot.t('NEW-MESSAGE-RECEIVED')
         notificationArray['job_id'] = job_id
+        notificationArray['message_id'] = response._id;
         notificationArray['user_id'] = mentor_id
         notificationArray['user_type'] = 'PARENT'
 
-        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
+        //console.log(notificationArray);
+
+        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'message_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
         newNotification.save(async function(err, record) {});
 

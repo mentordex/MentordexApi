@@ -45,7 +45,8 @@ var jobSchema = new mongoose.Schema({
     parent_review: {
         review: {
             type: String,
-            trim: true
+            trim: true,
+            default: ''
         },
         rating: {
             type: Number,
@@ -55,7 +56,8 @@ var jobSchema = new mongoose.Schema({
     mentor_review: {
         review: {
             type: String,
-            trim: true
+            trim: true,
+            default: ''
         },
         rating: {
             type: Number,

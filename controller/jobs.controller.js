@@ -543,6 +543,226 @@ exports.getParentJobDetails = async(req, res) => {
 
 }
 
+exports.saveMentorReview = async(req, res) => {
+
+    const { userID, job_id, mentor_id, rating, review } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+
+    let existingJob = await Jobs.findOne({ _id: mongoose.Types.ObjectId(job_id) });
+
+    if (!existingJob) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+
+
+    existingJob.mentor_review.review = review;
+    existingJob.mentor_review.rating = rating;
+
+    existingJob.save(function(err, job) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+    });
+}
+
+exports.cancelBookingRequest = async(req, res) => {
+
+    let notificationArray = [];
+    let messagesArray = [];
+    let notificationMsg = '';
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, job_id, job_status, job_message, mentor_id } = req.body
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    // Check Job Exist
+    let existingRecord = await Jobs.findOne({ _id: mongoose.Types.ObjectId(job_id) }, { _id: 1 });
+
+    if (!existingRecord) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
+
+    //save Jobs 
+    Jobs.findOneAndUpdate({ _id: mongoose.Types.ObjectId(job_id) }, { $set: { job_status: job_status } }, { new: true }, function(err, data) {
+
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+
+        // Send Message to Parent
+        messagesArray['message'] = job_message
+        messagesArray['sender_id'] = userID
+        messagesArray['receiver_id'] = mentor_id
+        messagesArray['job_id'] = job_id
+            //messagesArray['message_file'] = job_file
+
+        let newMessage = new Messages(_.pick(messagesArray, ['message', 'sender_id', 'receiver_id', 'job_id', 'is_read', 'created_at', 'modified_at']));
+        newMessage.save(async function(err, record) {});
+
+
+        if (job_status == 'ACCEPTED') {
+            notificationMsg = req.polyglot.t('BOOKING-ACCEPTED')
+        } else {
+            notificationMsg = req.polyglot.t('BOOKING-CANCELLED')
+        }
+
+
+        // Send New Notification To Parent
+        notificationArray['notification_type'] = 'BOOKING'
+        notificationArray['notification'] = notificationMsg
+        notificationArray['job_id'] = job_id
+        notificationArray['user_id'] = mentor_id
+        notificationArray['user_type'] = 'MENTOR'
+
+        let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
+
+        newNotification.save(async function(err, record) {});
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+    });
+
+
+}
+
+exports.getParentJobs = async(req, res) => {
+    //console.log(req.body);
+    const { size, pageNumber, sort_dir, sort_by, userID } = req.body
+    let condition = {};
+    let acceptedCondition = {};
+    let cancelledCondition = {};
+    let completedCondition = {};
+    let andcondition = []
+    let sortBy = {}
+    sortBy[sort_by] = (sort_dir == 'desc') ? -1 : 1
+
+    // Check Valid User
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    condition['parent_id'] = mongoose.Types.ObjectId(userID);
+
+    if (_.has(req.body.filters, ['job_status']) && req.body.filters['job_status'] != 'ALL') {
+        condition['job_status'] = req.body.filters['job_status'];
+    }
+
+    if (_.has(req.body.filters, ['search']) && (req.body.filters['search']) != '') {
+        andcondition.push({
+            $or: [
+                { job_title: { $regex: req.body.filters['search'], $options: 'i' } },
+                { job_description: { $regex: req.body.filters['search'], $options: 'i' } }
+            ]
+        })
+    }
+
+    if (andcondition.length > 0) {
+        condition['$and'] = andcondition
+    }
+
+
+
+    acceptedCondition['job_status'] = 'ACCEPTED';
+    cancelledCondition['job_status'] = 'CANCELLED';
+    completedCondition['job_status'] = 'COMPLETED';
+    acceptedCondition = {...condition, ...acceptedCondition }
+    cancelledCondition = {...condition, ...cancelledCondition }
+    completedCondition = {...condition, ...completedCondition }
+
+    //console.log(cancelledCondition);
+
+    let totalRecords = await Jobs.count(condition);
+    let totalAcceptedRecords = await Jobs.count(acceptedCondition);
+    let totalCancelledRecords = await Jobs.count(cancelledCondition);
+    let totalCompletedRecords = await Jobs.count(completedCondition);
+
+
+    let skip = (parseInt(pageNumber) * parseInt(size)) - parseInt(size);
+    let limit = parseInt(size);
+
+    Jobs.aggregate([{
+            $match: condition
+        },
+        {
+
+            "$lookup": {
+                from: "categories",
+                localField: "category_id",
+                foreignField: "_id",
+                as: "category",
+            }
+        },
+        {
+            "$lookup": {
+                from: "users",
+                localField: "mentor_id",
+                foreignField: "_id",
+                as: "mentor",
+            }
+        },
+        {
+            "$lookup": {
+                from: "subcategories",
+                localField: "subcategory_id",
+                foreignField: "_id",
+                as: "subcategory",
+            }
+        },
+        {
+            $project: {
+                'job_status': 1,
+                'job_active': 1,
+                'created_at': 1,
+                'job_title': 1,
+                'job_description': 1,
+                'job_file': 1,
+                'parent_id': 1,
+                'mentor_id': 1,
+                'parent_review': 1,
+                'mentor_review': 1,
+                'hourly_rate': 1,
+                'booking_time': 1,
+                'booking_date': 1,
+                'mentor.first_name': 1,
+                'mentor.last_name': 1,
+                'mentor.state': 1,
+                'mentor.city': 1,
+                'mentor.ratings': 1,
+                'category_id': 1,
+                'category.title': 1,
+                'subcategory_id': 1,
+                'subcategory.title': 1
+            },
+        },
+        { $sort: sortBy },
+        { $skip: skip },
+        { $limit: limit },
+
+        { $unwind: "$category" },
+        { $unwind: "$subcategory" },
+        { $unwind: "$mentor" }
+    ], function(err, jobs) {
+        if (err) { console.log(err) }
+        let data = {
+            records: jobs,
+            total_records: totalRecords,
+            total_accepted_records: totalAcceptedRecords,
+            total_cancelled_records: totalCancelledRecords,
+            total_completed_records: totalCompletedRecords,
+            condition: condition,
+            sortBy: sortBy,
+            err: err
+        }
+        return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+    })
+
+}
+
 exports.chargePayment = async(req, res) => {
     let condition = {};
     let paymentDetailsArray = [];

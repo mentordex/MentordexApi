@@ -65,6 +65,7 @@ exports.getNotifications = async(req, res) => {
                 'notification_type': 1,
                 'notification': 1,
                 'job_id': 1,
+                'message_id': 1,
                 'user_id': 1,
                 'user_type': 1,
                 'is_read': 1,

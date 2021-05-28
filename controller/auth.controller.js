@@ -9,7 +9,9 @@ const { Category } = require('../schema/category');
 const { Subcategory } = require('../schema/subcategory');
 const { Transactions } = require('../schema/transactions');
 const { Notifications } = require('../schema/notifications');
+const { Wishlist } = require('../schema/wishlist');
 const { Review } = require('../schema/review');
+const { Jobs } = require('../schema/jobs');
 const responseCode = require('../utilities/responseCode');
 const userObject = new User();
 const nodemailer = require("nodemailer");
@@ -710,7 +712,7 @@ exports.memberListing = async(req, res) => {
 
 
     let totalRecords = await User.count(condition);
-    console.log('totalRecords', totalRecords);
+    //console.log('totalRecords', totalRecords);
     //calculating the limit and skip attributes to paginate records
     let totalPages = totalRecords / size;
     //console.log('totalPages', totalPages);
@@ -797,7 +799,7 @@ exports.getParentDetails = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'subcategory_id1', 'subcategory_id2', 'subcategory_id3']));
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'first_name', 'last_name', 'email', 'phone', 'profile_image', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'subcategory_id1', 'subcategory_id2', 'subcategory_id3']));
 
 }
 
@@ -858,6 +860,69 @@ exports.getMentorProfileDetailsById = async(req, res) => {
 
 
 }
+
+exports.getMentorReviewsById = async(req, res) => {
+
+    let condition = {};
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, mentorId } = req.body
+
+
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let getMentorReviews = await Jobs.find({ mentor_id: mentorId, job_status: 'COMPLETED' });
+    let getMentorCompletedJobsCount = await Jobs.count({ mentor_id: mentorId, job_status: 'COMPLETED' });
+
+    let existingWishlist = await Wishlist.findOne({ mentor_id: mentorId, parent_id: userID });
+
+    let data = {
+        mentorReviews: getMentorReviews,
+        mentorCompletedJobsCount: getMentorCompletedJobsCount,
+        mentorAlreadySaved: (existingWishlist) ? true : false,
+    }
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(data);
+
+
+}
+
+exports.saveMentor = async(req, res) => {
+
+    let condition = {};
+    let wishlistArray = [];
+
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, mentorId } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+
+    let existingMentor = await User.findOne({ _id: mentorId });
+    if (!existingMentor) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    // Already Saved Mentor
+    let existingWishlist = await Wishlist.findOne({ mentor_id: mentorId, parent_id: userID });
+
+    if (!existingWishlist) {
+        wishlistArray['mentor_id'] = mentorId
+        wishlistArray['parent_id'] = userID
+        let newWishlist = new Wishlist(_.pick(wishlistArray, ['mentor_id', 'parent_id', 'created_at', 'modified_at']));
+        newWishlist.save(async function(err, record) {});
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+    } else {
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+    }
+
+}
+
 
 exports.getMentorSlotsByDate = async(req, res) => {
 
@@ -1049,6 +1114,48 @@ exports.onCompleteMentorApplication = async(req, res) => {
         return res.status(responseCode.CODES.SUCCESS.OK).send({ message: req.polyglot.t('USER-NOT-ACTIVE'), is_active: false, _id: existingUser._id, first_name: existingUser.first_name, last_name: existingUser.last_name, email: existingUser.email, role: existingUser.role });
     }
 }
+
+exports.updateParentProfile = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID, profile_image, first_name, last_name, password, country, state, city, country_id, state_id, city_id, zipcode } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    existingUser.profile_image = profile_image;
+    existingUser.first_name = first_name;
+    existingUser.last_name = last_name;
+    existingUser.country = country
+    existingUser.state = state
+    existingUser.city = city
+    existingUser.country_id = country_id
+    existingUser.state_id = state_id
+    existingUser.city_id = city_id
+    existingUser.zipcode = zipcode
+
+    if (password != '') {
+
+        const { encryptedPassword, salt } = await userObject.encryptPassword(existingUser, password); //encrypted password
+
+        existingUser.password = encryptedPassword
+    }
+
+
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id']));
+    });
+
+}
+
 
 exports.updateBasicDetails = async(req, res) => {
 
