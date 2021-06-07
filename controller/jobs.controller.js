@@ -821,7 +821,7 @@ exports.chargePayment = async(req, res) => {
 
         //console.log('paymentDetailsArray', paymentDetailsArray);
         //console.log('aymentDetailsArray.stripe_card_id', paymentDetailsArray['stripe_card_id']);
-        console.log('invoice', chargeItem);
+        //console.log('invoice', chargeItem);
 
         if (chargeItem.status == 'succeeded' && chargeItem.paid == true) {
 

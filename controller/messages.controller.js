@@ -528,7 +528,7 @@ exports.saveParentMessage = async(req, res) => {
         notificationArray['job_id'] = job_id
         notificationArray['message_id'] = response._id;
         notificationArray['user_id'] = mentor_id
-        notificationArray['user_type'] = 'PARENT'
+        notificationArray['user_type'] = 'MENTOR'
 
         //console.log(notificationArray);
 

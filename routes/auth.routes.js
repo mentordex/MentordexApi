@@ -1,6 +1,6 @@
 const { validator } = require('../validator/auth.validator')
 const { procErr } = require('../utilities/processErrors')
-const { login, checkGoogleLogin, signup, forgotPassword, userProfileData, getUserDetails, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, reviewListing, getParentDetails, updateParentProfile, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, updateProfileHourlyRateDetails, updateProfileAchievementDetails, updateProfileSocialLinksDetails, buySubscription, addYourPaymentMethod, getSavedPaymentMethod, getMentorMembershipDetails, cancelYourSubscription, upgradeYourSubscription, defaultCard, removeCard, getMentorProfileDetailsById, getMentorReviewsById, saveMentor, getMentorSlotsByDate, uploadFile, deleteObject, testMail, updateNotes, search, subcategoryListing } = require('../controller/auth.controller')
+const { login, checkGoogleLogin, signup, forgotPassword, userProfileData, getUserDetails, verifyToken, updatePassword, updateProfileInformation, contact, changePassword, updateMedia, memberListing, contactToAdmin, emailExist, officeListing, teamListing, reviewListing, getParentDetails, updateParentProfile, getMentorDetails, getMentorProfileDetails, resendMentorEmailVerification, resendMentorPhoneVerification, submitMentorPhoneVerification, verifyMentorEmail, updateParentInfo, checkEmailExists, onCompleteMentorApplication, updateBasicDetails, updateSkillsDetails, updateBookASlotDetails, updateProfileAcademicHistoryDetails, updateProfileBasicDetails, updateProfileEmploymentHistoryDetails, updateProfileHourlyRateDetails, updateProfileAchievementDetails, updateProfileSocialLinksDetails, buySubscription, addYourPaymentMethod, addYourBankAccount, getSavedBankAccounts, getSavedPaymentMethod, getMentorMembershipDetails, cancelYourSubscription, upgradeYourSubscription, defaultCard, removeCard, removeBankAccount, defaultBankAccount, getMentorProfileDetailsById, getMentorReviewsById, saveMentor, getMentorSlotsByDate, uploadFile, deleteObject, testMail, updateNotes, search, subcategoryListing, verifyPhoneNumber } = require('../controller/auth.controller')
 
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
@@ -47,6 +47,8 @@ module.exports = router => {
 
     router.get("/api/reviews", procErr, reviewListing)
 
+    router.post("/api/verifyPhoneNumber", procErr, verifyPhoneNumber)
+
     router.post("/api/getUserDetails", [validator('getUserDetails')], procErr, getUserDetails)
 
 
@@ -81,7 +83,10 @@ module.exports = router => {
 
     router.post("/api/addYourPaymentMethod", [validator('addYourPaymentMethod')], procErr, addYourPaymentMethod)
 
+    router.post("/api/addYourBankAccount", [validator('addYourBankAccount')], procErr, addYourBankAccount)
+
     router.post("/api/getSavedPaymentMethod", [validator('getSavedPaymentMethod')], procErr, getSavedPaymentMethod)
+    router.post("/api/getSavedBankAccounts", [validator('getSavedBankAccounts')], procErr, getSavedBankAccounts)
 
     router.post("/api/getMentorMembershipDetails", [validator('getMentorMembershipDetails')], procErr, getMentorMembershipDetails)
 
@@ -92,7 +97,12 @@ module.exports = router => {
 
 
     router.post("/api/defaultCard", [validator('defaultCard')], procErr, defaultCard)
+
+    router.post("/api/defaultBankAccount", [validator('defaultBankAccount')], procErr, defaultBankAccount)
+
     router.post("/api/removeCard", [validator('removeCard')], procErr, removeCard)
+
+    router.post("/api/removeBankAccount", [validator('removeBankAccount')], procErr, removeBankAccount)
 
     router.post("/api/getMentorProfileDetailsById", [validator('getMentorProfileDetailsById')], procErr, getMentorProfileDetailsById)
 

@@ -244,7 +244,21 @@ exports.validator = functionName => {
                     .exists().withMessage('USER-ID-REQUIRED')
                 ]
             }
+        case 'addYourBankAccount':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
         case 'getSavedPaymentMethod':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+        case 'getSavedBankAccounts':
             {
                 return [
                     check('userID')
@@ -282,7 +296,23 @@ exports.validator = functionName => {
                     .exists().withMessage('USER-ID-REQUIRED')
                 ]
             }
+
+        case 'defaultBankAccount':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
         case 'removeCard':
+            {
+                return [
+                    check('userID')
+                    .exists().withMessage('USER-ID-REQUIRED')
+                ]
+            }
+
+        case 'removeBankAccount':
             {
                 return [
                     check('userID')

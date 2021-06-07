@@ -50,6 +50,9 @@ const s3 = new aws.S3();
 
 const stripe = require('stripe')(config.get('stripeConfig.sandboxSecretKey'));
 
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const client = require('twilio')(config.get('twillio.TWILIO_ACCOUNT_SID'), config.get('twillio.TWILIO_AUTH_TOKEN'));
+
 
 exports.emailExist = async(req, res) => {
 
@@ -304,7 +307,8 @@ exports.signup = async(req, res) => {
         const token = await userObject.generateToken(user.salt_key); //generate AUTH token
 
         if (user.role == 'MENTOR') {
-            const phone_token = '0000';
+            //const phone_token = '0000';
+            const phone_token = Math.floor(1000 + Math.random() * 9000)
 
             if (user.googleLoginId == '') {
                 const email_token = await userObject.generateToken(user.salt_key); //generate token
@@ -334,12 +338,24 @@ exports.signup = async(req, res) => {
                 });
 
 
+
+
+
             } else {
 
                 await User.findOneAndUpdate({ _id: user._id }, { $set: { is_email_verified: 'VERIFIED', phone_token: phone_token } }, { new: true })
             }
 
-            return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+            // Send code for Phone Verification
+            phoneData = { 'phoneNumber': req.body.phone, 'OTP': phone_token }
+
+            let OTPVerification = await sendOTPForVerification(phoneData, res);
+
+            if (OTPVerification.body != '') {
+                return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+            } else {
+                return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+            }
 
 
         } else {
@@ -1695,7 +1711,7 @@ exports.buySubscription = async(req, res) => {
                                 transactionArray['payment_details'] = { 'stripe_card_id': cardResponse.id, 'credit_card_number': cardResponse.last4, 'card_type': cardResponse.brand, 'card_holder_name': cardResponse.name, 'exp_year': cardResponse.exp_year, 'exp_month': cardResponse.exp_month };
                                 transactionArray['user_type'] = 'MENTOR'
 
-                                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+                                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
 
                                 newTransaction.save(async function(err, record) {});
 
@@ -1856,6 +1872,63 @@ exports.addYourPaymentMethod = async(req, res) => {
 
 }
 
+exports.addYourBankAccount = async(req, res) => {
+
+    //console.log(req.body);
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: req.body.userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let BankDetailsArray = [];
+
+
+    // Save Payment Details in DB
+    if (isEmpty(existingUser.bank_details)) {
+
+
+        BankDetailsArray = [];
+        BankDetailsArray.push({ 'account_holder_name': req.body.bank_details.account_holder_name, 'account_number': req.body.bank_details.account_number, 'routing_number': req.body.bank_details.routing_number, 'bank_name': req.body.bank_details.bank_name, 'default': true }); //automatically set default to true
+
+
+    } else {
+
+        BankDetailsArray = existingUser.bank_details;
+
+        // check new default card request recieved
+        if (req.body.bank_details.default_card) {
+
+            // check if there is any previous default card method available 
+            let getPreviousDefaultCard = BankDetailsArray.filter((l) => l.default).map((l) => l);
+
+            if (getPreviousDefaultCard) {
+                // update All Previous Default Method to false				
+                for (var x = 0; x < BankDetailsArray.length; x++) {
+                    BankDetailsArray[x].default = false;
+                }
+
+            }
+
+        }
+
+
+        BankDetailsArray.push({ 'account_holder_name': req.body.bank_details.account_holder_name, 'account_number': req.body.bank_details.account_number, 'routing_number': req.body.bank_details.routing_number, 'bank_name': req.body.bank_details.bank_name, 'default': req.body.bank_details.default_card });
+
+    }
+
+
+    // Update Payment Details Array
+    existingUser.bank_details = BankDetailsArray;
+    existingUser.save(function(err, user) {
+        if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+        // todo: don't forget to handle err
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send({ success: 'Your Bank Account Added Successfully.' });
+    });
+
+}
+
 exports.getSavedPaymentMethod = async(req, res) => {
 
     // If no validation errors, get the req.body objects that were validated and are needed
@@ -1867,6 +1940,20 @@ exports.getSavedPaymentMethod = async(req, res) => {
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
     return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['payment_details']));
+
+}
+
+exports.getSavedBankAccounts = async(req, res) => {
+
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['bank_details']));
 
 }
 
@@ -2002,7 +2089,7 @@ exports.upgradeYourSubscription = async(req, res) => {
                 transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray[0].stripe_card_id, 'credit_card_number': paymentDetailsArray[0].credit_card_number, 'card_type': paymentDetailsArray[0].card_type, 'card_holder_name': paymentDetailsArray[0].card_holder_name, 'exp_year': paymentDetailsArray[0].exp_year, 'exp_month': paymentDetailsArray[0].exp_month };
                 transactionArray['user_type'] = 'MENTOR'
 
-                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+                let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
 
                 newTransaction.save(async function(err, record) {});
                 return res.status(responseCode.CODES.SUCCESS.OK).send({ success: req.polyglot.t('SUBSCRIPTION-UPGRADE-SUCCESS') });
@@ -2099,6 +2186,78 @@ exports.removeCard = async(req, res) => {
 
         }
     );
+
+
+}
+
+exports.defaultBankAccount = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let BankDetailsArray = existingUser.bank_details;
+
+    for (var x = 0; x < BankDetailsArray.length; x++) {
+        //console.log('yello', BankDetailsArray[x]._id)
+        //console.log('hello', req.body.bank_id)
+        if (BankDetailsArray[x]._id == req.body.bank_id) {
+            //console.log('hello')
+            BankDetailsArray[x].default = true;
+        } else {
+            BankDetailsArray[x].default = false;
+        }
+
+    }
+    // set new bank as default bank account in DB	
+
+    //console.log(BankDetailsArray);
+
+    User.findOneAndUpdate({ _id: userID }, { $set: { 'bank_details': BankDetailsArray } }, { new: true }, function(err, doc) {
+
+        if (err) {
+            return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('BANK-UPDATE-FAILED'));
+        }
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+    });
+
+
+
+}
+
+
+exports.removeBankAccount = async(req, res) => {
+    // If no validation errors, get the req.body objects that were validated and are needed
+    const { userID } = req.body
+
+    //checking unique email
+    let existingUser = await User.findOne({ _id: userID });
+
+    if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
+
+    let BankDetailsArray = existingUser.bank_details;
+
+    // Remove Card From DB
+    _.remove(BankDetailsArray, function(e) {
+        return e._id == req.body.bank_id
+    });
+
+    User.findOneAndUpdate({ _id: userID }, { $set: { 'bank_details': BankDetailsArray } }, { new: true }, function(err, doc) {
+
+        if (err) {
+            return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('CARD-UPDATE-FAILED'));
+        }
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+
+    });
+
+
 
 
 }
@@ -2282,6 +2441,41 @@ function saveNewCard(cardData, res) {
 
     });
 }
+
+
+exports.verifyPhoneNumber = async(req, res) => {
+
+    phoneData = { 'phoneNumber': '+917508002713', 'OTP': '785452' }
+
+    let OTPVerification = await sendOTPForVerification(phoneData, res);
+
+    console.log(OTPVerification);
+}
+
+function sendOTPForVerification(phoneData, res) {
+    return new Promise(function(resolve, reject) {
+        client.messages.create({
+            body: `Your one time verification code is ${phoneData.OTP}`,
+            from: config.get('twillio.TWILIO_NUMBER'),
+            to: phoneData.phoneNumber
+        }, function(err, phone) {
+            if (err) {
+                console.log(err);
+                //console.log('HEllo World2');
+                reject(handleTwilioError(err, res));
+            } // Handle Card Error
+            //console.log(card);
+            // update default payment method using Stripe API					
+            resolve(phone);
+        });
+    });
+}
+
+function handleTwilioError(err, res) {
+    return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Unable to send one time password for some unknown reason. Please try again later." });
+    exit;
+}
+
 
 
 exports.checkBillingMethodExists = async(req, res) => {

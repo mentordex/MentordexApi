@@ -13,6 +13,7 @@ var userSchema = new mongoose.Schema({
     salt_key: { type: String },
     fax: { type: String },
     phone: { type: String },
+    authyId: { type: String },
     phone_token: { type: String },
     email_token: { type: String },
     googleLoginId: {
@@ -474,6 +475,31 @@ var userSchema = new mongoose.Schema({
             //required: true,               
             default: false
         }
+    }],
+    bank_details: [{
+
+        account_holder_name: {
+            type: String,
+            trim: true
+        },
+        account_number: {
+            type: String,
+            trim: true
+        },
+        routing_number: {
+            type: String,
+            trim: true
+        },
+        bank_name: {
+            type: String,
+            trim: true
+        },
+        default: {
+            type: Boolean,
+            //required: true,               
+            default: false
+        }
+
     }],
     billing_details: [{
         address1: {
