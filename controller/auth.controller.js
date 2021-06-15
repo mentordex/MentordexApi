@@ -283,6 +283,8 @@ exports.signup = async(req, res) => {
 
     //console.log(req.body);
 
+    let OTPVerification = {}
+
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email } = req.body
 
@@ -291,74 +293,104 @@ exports.signup = async(req, res) => {
 
     if (existingUser) return res.status(400).send(req.polyglot.t('EMAIL-EXIST'));
 
+    if (req.body.role == 'MENTOR') {
+        //const phone_token = '0000';
+        const phone_token = Math.floor(1000 + Math.random() * 9000)
 
-    //save user 
-    newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'googleLoginId', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
+        // Send code for Phone Verification
+        phoneData = { 'phoneNumber': req.body.phone, 'OTP': phone_token }
 
+        client.messages.create({
+            body: `Your one time verification code is ${phoneData.OTP}`,
+            from: config.get('twillio.TWILIO_NUMBER'),
+            to: phoneData.phoneNumber
+        }).then(message => {
+            //save user 
+            newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'googleLoginId', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
 
+            newUser.save(async function(err, user) {
 
-    newUser.save(async function(err, user) {
+                if (err) {
+                    //console.log(err);
+                    return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
+                }
 
-        if (err) {
-            //console.log(err);
-            return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
-        }
-
-        const token = await userObject.generateToken(user.salt_key); //generate AUTH token
-
-        if (user.role == 'MENTOR') {
-            //const phone_token = '0000';
-            const phone_token = Math.floor(1000 + Math.random() * 9000)
-
-            if (user.googleLoginId == '') {
-                const email_token = await userObject.generateToken(user.salt_key); //generate token
-
-
-                const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
-                    //console.log('token',token);
-
-                await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
-
-                const msg = {
-                    to: user.email,
-                    from: config.get('sendgrid.from'),
-                    templateId: templates['mentor_signup'],
-                    dynamic_template_data: {
-                        name: user.first_name + ' ' + user.last_name,
-                        verify_link: verify_link,
-                        email: user.email
-                    }
-                };
-                sgMail.send(msg, (error, result) => {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log("That's wassup!");
-                    }
-                });
+                const token = await userObject.generateToken(user.salt_key); //generate AUTH token
 
 
 
 
+                //OTPVerification = await sendOTPForVerification(phoneData, res);
 
-            } else {
+                if (user.googleLoginId == '') {
+                    const email_token = await userObject.generateToken(user.salt_key); //generate token
 
-                await User.findOneAndUpdate({ _id: user._id }, { $set: { is_email_verified: 'VERIFIED', phone_token: phone_token } }, { new: true })
-            }
 
-            // Send code for Phone Verification
-            phoneData = { 'phoneNumber': req.body.phone, 'OTP': phone_token }
+                    const verify_link = `${config.get('webEndPoint')}/mentor/verify-email/${user._id}/${email_token}`
+                        //console.log('token',token);
 
-            let OTPVerification = await sendOTPForVerification(phoneData, res);
+                    await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, email_token: email_token, phone_token: phone_token } }, { new: true })
 
-            if (OTPVerification.body != '') {
+                    const msg = {
+                        to: user.email,
+                        from: config.get('sendgrid.from'),
+                        templateId: templates['mentor_signup'],
+                        dynamic_template_data: {
+                            name: user.first_name + ' ' + user.last_name,
+                            verify_link: verify_link,
+                            email: user.email
+                        }
+                    };
+                    sgMail.send(msg, (error, result) => {
+                        if (error) {
+                            console.log(error);
+                        } else {
+                            console.log("That's wassup!");
+                        }
+                    });
+
+                } else {
+
+                    await User.findOneAndUpdate({ _id: user._id }, { $set: { is_email_verified: 'VERIFIED', phone_token: phone_token } }, { new: true })
+                }
+
                 return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
-            } else {
-                return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+
+                /* console.log(OTPVerification);
+        
+                    if (typeof OTPVerification === 'undefined') {
+                        return res.status(400).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+                    } else {
+                        return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
+        
+                    }
+        
+                    */
+
+
+
+
+            });
+
+
+        }).catch(e => {
+            return res.status(400).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+        });
+
+    } else {
+        //save user 
+        newUser = new User(_.pick(req.body, ['first_name', 'last_name', 'email', 'password', 'googleLoginId', 'phone', 'phone_token', 'email_token', 'country', 'state', 'city', 'country_id', 'state_id', 'city_id', 'zipcode', 'role', 'account_type', 'is_active', 'is_email_verified', 'is_phone_verified', 'salt_key', 'device_data', 'newsletter', 'created_at', 'modified_at', 'admin_status']));
+
+        newUser.save(async function(err, user) {
+
+            if (err) {
+                //console.log(err);
+                return res.status(500).send(req.polyglot.t('SYSTEM-ERROR'));
             }
 
+            const token = await userObject.generateToken(user.salt_key); //generate AUTH token
 
-        } else {
+
             // IF Role = PARENT
             if (user.googleLoginId == '') {
                 await User.findOneAndUpdate({ _id: user._id }, { $set: { auth_token: token, is_active: 'ACTIVE', admin_status: 'APPROVED' } }, { new: true })
@@ -372,9 +404,16 @@ exports.signup = async(req, res) => {
 
             //return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(user, ['_id', 'first_name', 'last_name', 'email', 'role']));
             return res.status(responseCode.CODES.SUCCESS.OK).send(user);
-        }
 
-    });
+
+        });
+
+
+
+
+    }
+
+
 
 }
 
@@ -388,10 +427,12 @@ exports.signup = async(req, res) => {
  */
 exports.checkGoogleLogin = async(req, res) => {
 
+    let OTPVerification = {}
+
     // If no validation errors, get the req.body objects that were validated and are needed
     const { email } = req.body
 
-    user = await User.findOne({ "email": email }, { email: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1, subscription_status: 1 });
+    user = await User.findOne({ "email": email }, { email: 1, phone: 1, role: 1, salt_key: 1, created_at: 1, password: 1, first_name: 1, last_name: 1, is_active: 1, is_email_verified: 1, is_phone_verified: 1, admin_status: 1, subscription_status: 1 });
 
     if (user) {
         const token = await userObject.generateToken(user.salt_key); //generate token
@@ -399,7 +440,21 @@ exports.checkGoogleLogin = async(req, res) => {
         if (user.role == 'MENTOR') {
             // If Phone not verified for mentor
             if (user.is_phone_verified == 'NOT-VERIFIED') {
-                const phone_token = '0000';
+                //const phone_token = '0000';
+                const phone_token = Math.floor(1000 + Math.random() * 9000)
+
+                // Send code for Phone Verification
+                phoneData = { 'phoneNumber': user.phone, 'OTP': phone_token }
+
+                client.messages.create({
+                    body: `Your one time verification code is ${phoneData.OTP}`,
+                    from: config.get('twillio.TWILIO_NUMBER'),
+                    to: phoneData.phoneNumber
+                }).then(message => {
+                    console.log(true);
+                }).catch(e => {
+                    return res.status(400).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+                });
 
                 await User.findOneAndUpdate({ _id: user._id }, { $set: { phone_token: phone_token } }, { new: true })
 
@@ -974,6 +1029,8 @@ exports.getMentorSlotsByDate = async(req, res) => {
 
         //console.log('availableSlots', availableSlots[0].slots)
         return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots[0].slots });
+
+
     } else {
         return res.status(responseCode.CODES.SUCCESS.OK).send({ availableSlots: availableSlots });
     }
@@ -987,16 +1044,33 @@ exports.getMentorSlotsByDate = async(req, res) => {
 
 exports.resendMentorPhoneVerification = async(req, res) => {
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, phoneToken } = req.body
+    const { userID } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: '0000' } }, { new: true })
+    //const phone_token = '0000';
+    const phone_token = Math.floor(1000 + Math.random() * 9000)
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+    // Send code for Phone Verification
+    phoneData = { 'phoneNumber': existingUser.phone, 'OTP': phone_token }
+
+    await User.findOneAndUpdate({ _id: existingUser._id }, { $set: { phone_token: phone_token } }, { new: true });
+
+    client.messages.create({
+        body: `Your one time verification code is ${phoneData.OTP}`,
+        from: config.get('twillio.TWILIO_NUMBER'),
+        to: phoneData.phoneNumber
+    }).then(message => {
+
+        return res.status(responseCode.CODES.SUCCESS.OK).send(existingUser);
+    }).catch(e => {
+        return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('OTP-FAILED-TO-SEND'));
+    });
+
+
 }
 
 exports.submitMentorPhoneVerification = async(req, res) => {
@@ -2454,16 +2528,12 @@ exports.verifyPhoneNumber = async(req, res) => {
 
 function sendOTPForVerification(phoneData, res) {
     return new Promise(function(resolve, reject) {
-        client.messages.create({
+        return client.messages.create({
             body: `Your one time verification code is ${phoneData.OTP}`,
             from: config.get('twillio.TWILIO_NUMBER'),
             to: phoneData.phoneNumber
         }, function(err, phone) {
-            if (err) {
-                console.log(err);
-                //console.log('HEllo World2');
-                reject(handleTwilioError(err, res));
-            } // Handle Card Error
+            if (err) { console.log(err); }
             //console.log(card);
             // update default payment method using Stripe API					
             resolve(phone);
@@ -2472,7 +2542,7 @@ function sendOTPForVerification(phoneData, res) {
 }
 
 function handleTwilioError(err, res) {
-    return res.status(responseCode.CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR).send({ 'error': "Unable to send one time password for some unknown reason. Please try again later." });
+    return res.status(400).send("Unable to send one time password for some unknown reason. Please try again later.");
     exit;
 }
 

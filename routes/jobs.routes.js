@@ -1,5 +1,5 @@
 const { procErr } = require('../utilities/processErrors')
-const { add, listing, deleteJobs, changeStatus, newBookingRequest, upateBookingRequest, getMentorJobDetails, getMentorJobs, getParentJobDetails, chargePayment, getParentJobs, saveParentReview, saveMentorReview, cancelBookingRequest } = require('../controller/jobs.controller')
+const { add, listing, deleteJobs, changeStatus, newBookingRequest, upateBookingRequest, getMentorJobDetails, getMentorJobs, getParentJobDetails, chargePayment, getParentJobs, saveParentReview, saveMentorReview, calMentorRating, cancelBookingRequest } = require('../controller/jobs.controller')
 const tokenValidator = require('../utilities/token'); //calling token checking middleware
 
 // Routes =============================================================
@@ -20,6 +20,7 @@ module.exports = router => {
     router.post("/api/jobs/getMentorJobDetails", procErr, getMentorJobDetails)
     router.post("/api/jobs/getMentorJobs", procErr, getMentorJobs)
     router.post("/api/jobs/saveMentorReview", procErr, saveMentorReview)
+    router.post("/api/jobs/calMentorRating", procErr, calMentorRating)
 
 
     /* Parent Job Functions */

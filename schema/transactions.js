@@ -68,6 +68,11 @@ var transactionSchema = new mongoose.Schema({
             trim: true
         }
     },
+    transaction_status: {
+        type: String,
+        enum: ['PAID', 'PENDING', 'HOLD'],
+        default: 'PAID'
+    },
     created_at: {
         type: Date,
         default: new Date()

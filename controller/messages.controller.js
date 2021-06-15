@@ -278,6 +278,7 @@ exports.saveMentorMessage = async(req, res) => {
     messagesArray['receiver_id'] = parent_id
     messagesArray['job_id'] = job_id
     messagesArray['message_file'] = message_file
+    messagesArray['created_at'] = new Date().toISOString()
 
     let newMessage = new Messages(_.pick(messagesArray, ['message', 'sender_id', 'receiver_id', 'job_id', 'message_file', 'is_read', 'created_at', 'modified_at']));
 
@@ -291,6 +292,7 @@ exports.saveMentorMessage = async(req, res) => {
         notificationArray['user_id'] = parent_id
         notificationArray['message_id'] = response._id;
         notificationArray['user_type'] = 'PARENT'
+        notificationArray['created_at'] = new Date().toISOString()
 
         //console.log(notificationArray);
 
@@ -516,6 +518,7 @@ exports.saveParentMessage = async(req, res) => {
     messagesArray['receiver_id'] = mentor_id
     messagesArray['job_id'] = job_id
     messagesArray['message_file'] = message_file
+    messagesArray['created_at'] = new Date().toISOString()
 
     let newMessage = new Messages(_.pick(messagesArray, ['message', 'sender_id', 'receiver_id', 'job_id', 'message_file', 'is_read', 'created_at', 'modified_at']));
 
@@ -529,6 +532,7 @@ exports.saveParentMessage = async(req, res) => {
         notificationArray['message_id'] = response._id;
         notificationArray['user_id'] = mentor_id
         notificationArray['user_type'] = 'MENTOR'
+        notificationArray['created_at'] = new Date().toISOString()
 
         //console.log(notificationArray);
 

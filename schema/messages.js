@@ -49,11 +49,11 @@ var messageSchema = new mongoose.Schema({
     },
     created_at: {
         type: Date,
-        default: new Date()
+        default: new Date().toISOString()
     },
     modified_at: {
         type: Date,
-        default: new Date()
+        default: new Date().toISOString()
     }
 
 

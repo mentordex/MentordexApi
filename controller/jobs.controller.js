@@ -454,11 +454,31 @@ exports.saveParentReview = async(req, res) => {
     existingJob.parent_review.review = review;
     existingJob.parent_review.rating = rating;
 
-    existingJob.save(function(err, job) {
+    existingJob.save(async function(err, job) {
 
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); // todo: don't forget to handle err
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+        await Jobs.aggregate([
+                { $match: { parent_id: mongoose.Types.ObjectId(parent_id), job_status: 'COMPLETED' } },
+
+                { $group: { _id: "$parent_id", TotalSum: { $sum: "$parent_review.rating" }, myCount: { $sum: 1 }, avg: { $avg: '$parent_review.rating' } } },
+
+                { $project: { _id: 1, TotalSum: 1, myCount: 1, avg: { $round: ['$avg', 1] } } }
+            ],
+            async function(err, ratingSum) {
+
+                //console.log('err', err);
+                //console.log('sum', ratingSum);
+                //console.log('sum', ratingSum['0'].avg);
+
+                await User.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.parent_id) }, { $set: { rating: ratingSum['0'].avg } }, { new: true });
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+                //let totalRecords = Jobs.count(condition);
+                //console.log('totalRecords', totalRecords);
+            })
+
+
     });
 }
 
@@ -552,7 +572,6 @@ exports.saveMentorReview = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-
     let existingJob = await Jobs.findOne({ _id: mongoose.Types.ObjectId(job_id) });
 
     if (!existingJob) return res.status(400).send(req.polyglot.t('NO-RECORD-FOUND'));
@@ -562,12 +581,51 @@ exports.saveMentorReview = async(req, res) => {
     existingJob.mentor_review.review = review;
     existingJob.mentor_review.rating = rating;
 
-    existingJob.save(function(err, job) {
+    existingJob.save(async function(err, job) {
 
         if (err) return res.status(500).send(req.polyglot.t('SYSTEM-ERROR')); // todo: don't forget to handle err
 
-        return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+        await Jobs.aggregate([
+                { $match: { mentor_id: mongoose.Types.ObjectId(mentor_id), job_status: 'COMPLETED' } },
+
+                { $group: { _id: "$mentor_id", TotalSum: { $sum: "$mentor_review.rating" }, myCount: { $sum: 1 }, avg: { $avg: '$mentor_review.rating' } } },
+
+                { $project: { _id: 1, TotalSum: 1, myCount: 1, avg: { $round: ['$avg', 1] } } }
+            ],
+            async function(err, ratingSum) {
+
+                //console.log('err', err);
+                //console.log('sum', ratingSum);
+                //console.log('sum', ratingSum['0'].avg);
+
+                await User.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.body.mentor_id) }, { $set: { rating: ratingSum['0'].avg } }, { new: true });
+
+                return res.status(responseCode.CODES.SUCCESS.OK).send(true);
+                //let totalRecords = Jobs.count(condition);
+                //console.log('totalRecords', totalRecords);
+            })
+
+
     });
+}
+
+exports.calMentorRating = async(req, res) => {
+
+    let condition = [];
+    condition['mentor_id'] = mongoose.Types.ObjectId(req.body.mentor_id);
+    console.log(condition)
+    Jobs.aggregate([{ $match: { mentor_id: mongoose.Types.ObjectId(req.body.mentor_id), job_status: 'COMPLETED' } },
+            { $group: { _id: "$mentor_id", TotalSum: { $sum: "$mentor_review.rating" }, myCount: { $sum: 1 }, avg: { $avg: '$mentor_review.rating' } } }, { $project: { _id: 1, TotalSum: 1, myCount: 1, avg: { $round: ['$avg', 1] } } }
+        ],
+        function(err, ratingSum) {
+
+            console.log('err', err);
+            console.log('sum', ratingSum);
+
+            //let totalRecords = Jobs.count(condition);
+            //console.log('totalRecords', totalRecords);
+        })
+
 }
 
 exports.cancelBookingRequest = async(req, res) => {
@@ -838,8 +896,9 @@ exports.chargePayment = async(req, res) => {
             newMessage.save(async function(err, record) {});
 
 
-            // Save New Transaction
+            // Save New Transaction for Parent
             transactionArray['transaction_type'] = 'Job Completed'
+            transactionArray['transaction_status'] = 'PAID'
             transactionArray['user_id'] = req.body.userID
             transactionArray['job_id'] = req.body.job_id
             transactionArray['receipt_url'] = chargeItem.receipt_url
@@ -848,9 +907,23 @@ exports.chargePayment = async(req, res) => {
             transactionArray['payment_details'] = { 'stripe_card_id': paymentDetailsArray[0].stripe_card_id, 'credit_card_number': paymentDetailsArray[0].credit_card_number, 'card_type': paymentDetailsArray[0].card_type, 'card_holder_name': paymentDetailsArray[0].card_holder_name, 'exp_year': paymentDetailsArray[0].exp_year, 'exp_month': paymentDetailsArray[0].exp_month };
             transactionArray['user_type'] = 'PARENT'
 
-            let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'job_id', 'invoice_id', 'payment_details', 'receipt_url', 'created_at', 'modified_at']));
+            let newParentTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'job_id', 'price', 'invoice_id', 'payment_details', 'receipt_url', 'transaction_status', 'created_at', 'modified_at']));
 
-            newTransaction.save(async function(err, record) {});
+            newParentTransaction.save(async function(err, record) {});
+
+            // Save New Transaction for Mentor
+            transactionArray = [];
+            transactionArray['transaction_type'] = 'Job Completed'
+            transactionArray['transaction_status'] = 'PENDING'
+            transactionArray['user_id'] = req.body.mentor_id
+            transactionArray['job_id'] = req.body.job_id
+            transactionArray['price'] = existingJob.hourly_rate
+            transactionArray['user_type'] = 'MENTOR'
+
+            let newMentorTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'job_id', 'transaction_status', 'price', 'created_at', 'modified_at']));
+
+            newMentorTransaction.save(async function(err, record) {});
+
 
             // Send Notification To Mentor
             notificationMsg = parent.first_name + ' has marked the job as completed.';
@@ -871,37 +944,7 @@ exports.chargePayment = async(req, res) => {
 
     });
 
-    /*stripe.invoiceItems.create({
-        customer: parent.stripe_customer_id,
-        amount: parentChargeAmount,
-        currency: 'usd',
-        description: 'Job:' + existingJob.job_title + '.',
-    }, function(err, invoiceItem) {
-        if (err) {
-            console.log(err);
-            handleStripeError(err, res)
-        } // Handle Invoice Item Error
 
-        console.log('invoice', invoiceItem);
-
-        stripe.invoices.create({
-            customer: parent.stripe_customer_id,
-            collection_method: 'charge_automatically',
-            auto_advance: true,
-            custom_fields: [{ 'name': 'job_id', 'value': req.body.job_id }]
-        }, function(err, invoice) {
-            // asynchronously called
-            if (err) {
-                console.log(err);
-                handleStripeError(err, res)
-            } // Handle Seller Invoice Error
-            console.log('invoice', invoice);
-
-        });
-
-    });
-
-    */
 
 
 }
