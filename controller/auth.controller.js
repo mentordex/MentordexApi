@@ -902,7 +902,7 @@ exports.getMentorProfileDetails = async(req, res) => {
 
     if (!existingUser) return res.status(responseCode.CODES.CLIENT_ERROR.BAD_REQUEST).send(req.polyglot.t('ACCOUNT-NOT-REGISTERD'));
 
-    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'country', 'state', 'city', 'category1', 'category2', 'category3', 'subcategory1', 'subcategory2', 'subcategory3', 'first_name', 'last_name', 'primary_language', 'rating', 'letter_of_recommendation', 'availability', 'academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'admin_status', 'subscription_status']));
+    return res.status(responseCode.CODES.SUCCESS.OK).send(_.pick(existingUser, ['_id', 'country', 'state', 'city', 'category1', 'category2', 'category3', 'subcategory1', 'subcategory2', 'subcategory3', 'first_name', 'last_name', 'primary_language', 'rating', 'letter_of_recommendation', 'availability', 'academics', 'achievements', 'employments', 'profile_image', 'introduction_video', 'introduction_youtube_url', 'introduction_video_type', 'tagline', 'servicable_zipcodes', 'bio', 'hourly_rate', 'website', 'admin_status', 'subscription_status']));
 
 }
 
@@ -1343,7 +1343,7 @@ exports.updateProfileBasicDetails = async(req, res) => {
     //const user_id = mongoose.Types.ObjectId(req.body['user_id']);
 
     // If no validation errors, get the req.body objects that were validated and are needed
-    const { userID, profile_image, introduction_video, tagline, bio, servicable_zipcodes } = req.body
+    const { userID, profile_image, introduction_video, introduction_youtube_url, introduction_video_type, tagline, bio, servicable_zipcodes } = req.body
 
     //checking unique email
     let existingUser = await User.findOne({ _id: userID });
@@ -1352,6 +1352,8 @@ exports.updateProfileBasicDetails = async(req, res) => {
 
     existingUser.profile_image = profile_image;
     existingUser.introduction_video = introduction_video;
+    existingUser.introduction_youtube_url = introduction_youtube_url;
+    existingUser.introduction_video_type = introduction_video_type;
     existingUser.tagline = tagline;
     existingUser.bio = bio;
     existingUser.servicable_zipcodes = servicable_zipcodes;
@@ -1699,7 +1701,7 @@ exports.buySubscription = async(req, res) => {
 
                                     transactionArray['user_type'] = 'MENTOR'
 
-                                    let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
+                                    let newTransaction = new Transactions(_.pick(transactionArray, ['transaction_type', 'user_id', 'user_type', 'price', 'price_id', 'invoice_id', 'payment_details', 'created_at', 'modified_at']));
 
                                     newTransaction.save(async function(err, record) {});
 

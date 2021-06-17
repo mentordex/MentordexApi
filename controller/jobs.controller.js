@@ -148,6 +148,7 @@ exports.newBookingRequest = async(req, res) => {
         notificationArray['job_id'] = newJob._id
         notificationArray['user_id'] = mentor_id
         notificationArray['user_type'] = 'MENTOR'
+        notificationArray['created_at'] = new Date().toISOString()
 
         let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
@@ -264,7 +265,7 @@ exports.getMentorJobs = async(req, res) => {
                 'parent.last_name': 1,
                 'parent.state': 1,
                 'parent.city': 1,
-                'parent.ratings': 1,
+                'parent.rating': 1,
                 'category_id': 1,
                 'category.title': 1,
                 'subcategory_id': 1,
@@ -355,7 +356,7 @@ exports.getMentorJobDetails = async(req, res) => {
                 'parent.last_name': 1,
                 'parent.state': 1,
                 'parent.city': 1,
-                'parent.ratings': 1,
+                'parent.rating': 1,
                 'category_id': 1,
                 'category.title': 1,
                 'subcategory_id': 1,
@@ -422,6 +423,7 @@ exports.upateBookingRequest = async(req, res) => {
         notificationArray['job_id'] = job_id
         notificationArray['user_id'] = parent_id
         notificationArray['user_type'] = 'PARENT'
+        notificationArray['created_at'] = new Date().toISOString()
 
         let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
@@ -544,7 +546,7 @@ exports.getParentJobDetails = async(req, res) => {
                 'mentor.last_name': 1,
                 'mentor.state': 1,
                 'mentor.city': 1,
-                'mentor.ratings': 1,
+                'mentor.rating': 1,
                 'category_id': 1,
                 'category.title': 1,
                 'subcategory_id': 1,
@@ -676,6 +678,7 @@ exports.cancelBookingRequest = async(req, res) => {
         notificationArray['job_id'] = job_id
         notificationArray['user_id'] = mentor_id
         notificationArray['user_type'] = 'MENTOR'
+        notificationArray['created_at'] = new Date().toISOString()
 
         let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
 
@@ -790,7 +793,7 @@ exports.getParentJobs = async(req, res) => {
                 'mentor.last_name': 1,
                 'mentor.state': 1,
                 'mentor.city': 1,
-                'mentor.ratings': 1,
+                'mentor.rating': 1,
                 'category_id': 1,
                 'category.title': 1,
                 'subcategory_id': 1,
@@ -926,12 +929,13 @@ exports.chargePayment = async(req, res) => {
 
 
             // Send Notification To Mentor
-            notificationMsg = parent.first_name + ' has marked the job as completed.';
+            notificationMsg = parent.first_name + ' marked the job as complete.';
             notificationArray['notification_type'] = 'BOOKING'
             notificationArray['notification'] = notificationMsg
             notificationArray['job_id'] = job_id
             notificationArray['user_id'] = mentor_id
             notificationArray['user_type'] = 'MENTOR'
+            notificationArray['created_at'] = new Date().toISOString()
 
             let newNotification = new Notifications(_.pick(notificationArray, ['notification_type', 'notification', 'job_id', 'user_id', 'user_type', 'created_at', 'modified_at']));
             newNotification.save(async function(err, record) {});

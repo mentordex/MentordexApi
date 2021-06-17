@@ -63,6 +63,15 @@ var userSchema = new mongoose.Schema({
             trim: true
         }
     }],
+    introduction_youtube_url: {
+        type: String,
+        trim: true
+    },
+    introduction_video_type: {
+        type: String,
+        enum: ['Upload', 'Youtube'],
+        default: 'Upload'
+    },
     address: {
         type: String,
     },
